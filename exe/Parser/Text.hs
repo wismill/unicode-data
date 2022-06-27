@@ -26,6 +26,7 @@ import Data.Bifunctor (Bifunctor(..))
 import Data.Char (chr, ord, isSpace)
 import Data.Functor ((<&>))
 import Data.Function ((&))
+import Data.Ix (inRange)
 import Data.List (intersperse, dropWhileEnd, unfoldr, sort, sortBy)
 import Data.Maybe (mapMaybe)
 import Data.Ratio ((%))
@@ -47,7 +48,7 @@ import qualified Streamly.Unicode.Stream as Unicode
 import Prelude hiding (pred)
 
 -- [FIXME]
-import Unicode.Char.Normalization
+import qualified Unicode.Char as UChar
 
 -------------------------------------------------------------------------------
 -- Types
@@ -622,7 +623,7 @@ genNormalizationPropertiesModule moduleName quickCheckValues =
 
     where
 
-    done ccs = let (exports, bitmaps) = mkProperties ccs in unlines
+    done (ccs, xs) = let (exports, bitmaps) = mkProperties ccs xs in unlines
         [ apacheLicense moduleName
         , "{-# OPTIONS_HADDOCK hide #-}"
         , ""
@@ -631,26 +632,37 @@ genNormalizationPropertiesModule moduleName quickCheckValues =
         , "where"
         , ""
         , "import Data.Char (ord)"
-        , "import Unicode.Internal.Bits (lookupBit64, lookupInt2)"
+        , "import Unicode.Internal.Bits (lookupBit64, lookupIntN)"
         , ""
         , mconcat bitmaps
         ]
 
-    step acc dc = if _combiningClass dc == 0
-        -- starter
-        then acc
-        -- combining
-        else ord (_char dc) : acc
+    step (ccs, xs) dc =
+        let ccs' = if _combiningClass dc == 0
+                -- starter
+                then ccs
+                -- combining
+                else ord (_char dc) : ccs
+            xs' = maybe xs (:xs) (firstComposable dc)
+        in (ccs', xs')
 
-    mkProperties :: [Int] -> ([String], [String])
-    mkProperties ccs = foldr (mkProp ccs) mempty quickCheckValues
+    -- Get first character of a 2-characters decomposition
+    firstComposable dc = case _decomposition dc of
+        DC cs -> case cs of
+            [c,_] -> Just (ord c)
+            _     -> Nothing
+        _     -> Nothing
 
-    mkProp ccs (name, values) (props, bitmaps) =
+    mkProperties :: [Int] -> [Int] -> ([String], [String])
+    mkProperties ccs xs = foldr (mkProp ccs xs) mempty quickCheckValues
+
+    mkProp ccs xs (name, values) (props, bitmaps) =
         ( name : props
         , (: bitmaps) $ case name of
-            "NFD_QC"  -> genQuickCheckBitMapD     (prop2FuncName name) Canonical values
-            "NFKD_QC" -> genQuickCheckBitMapD     (prop2FuncName name) Kompat    values
-            _         -> genQuickCheckBitMapC ccs (prop2FuncName name)           values
+            "NFD_QC"  -> genQuickCheckBitMapD        (prop2FuncName name)                 values
+            "NFKD_QC" -> genQuickCheckBitMapD        (prop2FuncName name)                 values
+            "NFC_QC"  -> genQuickCheckBitMapC ccs xs (prop2FuncName name) UChar.Canonical values
+            _         -> genQuickCheckBitMapC ccs xs (prop2FuncName name) UChar.Kompat    values
         )
 
     prop2FuncName = ("is" <>)
@@ -659,64 +671,73 @@ genNormalizationPropertiesModule moduleName quickCheckValues =
         = genBitmapD funcName
         . mapMaybe encodeD
 
-    genQuickCheckBitMapC ccs funcName kompat
-        = genBitmapC funcName
-        . (\(acc, _, minCP, maxCP) -> (reverse acc, either id id minCP, maxCP))
-        . foldr (encodeC kompat ccs) (mempty, 0, Right 0, 0)
-        . sortBy (flip compare)
-
     -- NFD & NFKD: Encode Quick_Check value on 1 bit
     encodeD (cp, quickCheck) = case quickCheck of
         QuickCheckYes   -> Nothing
         QuickCheckNo    -> Just cp
         QuickCheckMaybe -> error ("Unexpected Maybe value for: " <> show cp)
 
+    genQuickCheckBitMapC ccs xs funcName mode
+        = genBitmapC funcName
+        . (\acc -> reverse (fst acc))
+        . foldr (encodeC mode ccs xs) (mempty, 0)
+        . sortBy (flip compare)
+
     -- NFC & NFKC: Encode Quick_Check value on 4 bits
     -- • 0000 ( 0): No: decomposable
     -- • 0001 ( 1): Maybe, non-Jamo, decomposable
-    -- • 0101 ( 5): Maybe, non-Jamo, non-decomposable
-    -- • 1001 ( 9): Maybe, Jamo V
-    -- • 1101 (13): Maybe, Jamo T
-    -- • 0010 ( 2): Yes, starter, decomposable
+    -- • 0010 ( 2): Maybe, non-Jamo, non-decomposable
+    -- • 0011 ( 3): Maybe, Jamo V
+    -- • 0100 ( 4): Maybe, Jamo T
+    -- • 0101 ( 5): Yes, starter, decomposable
     -- • 0110 ( 6): Yes, starter, not decomposable, may compose with next.
-    -- • 1010 (10): Yes, starter, not decomposable, never compose with next.
-    -- • 1110 (16): Yes, combining, not decomposable
-    -- • 0011 ( 3): Yes, starter, Jamo L
-    -- • 0111 ( 7): Yes, starter, other Jamo
+    -- • 0111 ( 7): Yes, starter, not decomposable, never compose with next.
+    -- • 1000 ( 8): Yes, combining, not decomposable
+    -- • 1001 ( 9): Yes, starter, Jamo L
+    -- • 1010 (10): Yes, starter, other Jamo
     -- • 1011 (11): Yes, starter, Hangul precomposed syllable LV
-    -- • 1111 (17): Yes, starter, Hangul precomposed syllable LVT
-    -- Note: here encoded reversed
+    -- • 1100 (12): Yes, starter, Hangul precomposed syllable LVT
     encodeC
-        :: DecomposeMode
-        -> [Int]
+        :: UChar.DecomposeMode
+        -> [Int] -- Combining chars
+        -> [Int] -- Composable chars
         -> (Int, QuickCheck)
-        -> ([Word8], Int, Either Int Int, Int)
-        -> ([Word8], Int, Either Int Int, Int)
-    encodeC kompat ccs v@(cp, quickCheck) (acc, expected, minCP, maxCP) =
+        -> ([Word8], Int)
+        -> ([Word8], Int)
+    encodeC mode ccs xs v@(cp, quickCheck) (acc, expected) =
         if cp > expected
             -- Yes
-            then encodeC ccs v ( mkYes kompat ccs c : acc
-                               , succ expected
-                               , succ <$> minCP
-                               , expected )
+            then encodeC mode ccs xs v ( mkYes mode ccs xs expected : acc
+                                       , succ expected )
             -- No or Maybe
             else case quickCheck of
                 QuickCheckYes   -> error
                     ("Unexpected Maybe value for: " <> show cp)
-                QuickCheckNo    -> ( mkNo c : acc
-                                   , succ expected
-                                   , minCP >>= Left
-                                   , cp )
-                QuickCheckMaybe -> ( mkMaybe kompat ccs c : acc
-                                   , succ expected
-                                   , minCP >>= Left
-                                   , cp )
+                QuickCheckNo    -> ( mkNo : acc
+                                   , succ expected )
+                QuickCheckMaybe -> ( mkMaybe mode cp : acc
+                                   , succ expected )
 
-    mkNo c = 0
-    mkYes kompat ccs c
-        | isDecomposable
-        where mode = if kompat then Kompat else Canonical
-    mkMaybe kompat ccs c =
+    mkNo = 0
+    mkMaybe mode cp
+        | inRange (UChar.jamoVFirst, UChar.jamoVLast) cp = 3 -- Jamo V
+        | inRange (succ UChar.jamoTFirst, UChar.jamoTLast) cp = 4 -- Jamo T
+        | UChar.isDecomposable mode (chr cp) = 1 -- Non-jamo, decomposable
+        | otherwise = 2 -- Non-jamo, non-decomposable
+    mkYes mode ccs xs cp
+        | inRange (UChar.jamoLFirst, UChar.jamoLLast) cp = 9 -- Jamo L
+        | inRange (UChar.jamoLFirst, UChar.jamoTLast) cp = 10 -- Other Jamo
+        | inRange (UChar.hangulFirst, UChar.hangulLast) cp =
+            if (cp - UChar.hangulFirst) `rem` UChar.jamoTCount == 0
+                then 11 -- Hangul LV
+                else 12 -- Hangul LVT
+        | isCombining ccs cp = 8 -- combining, not decomposable
+        | UChar.isDecomposable mode c = 5 -- starter, decomposable
+        | mayCompose xs cp = 6 -- starter, not decomposable, may compose with next.
+        | otherwise = 7 -- starter, not decomposable, never compose with next.
+        where c = chr cp
+    mayCompose = flip elem
+    isCombining = flip elem
 
     -- Note: No maybe
     genBitmapD :: String -> [Int] -> String
@@ -728,28 +749,12 @@ genNormalizationPropertiesModule moduleName quickCheckValues =
                 <> genRangeCheck "n" bits
                 <> " && lookupBit64 bitmap# n)"
             , "  where"
-            , "    bitmap# = \"" <> bitMapToAddrLiteral (positionsToBitMap bits) "\"#\n"
+            , "    bitmap# = \""
+                <> bitMapToAddrLiteral (positionsToBitMap bits) "\"#\n"
             ]
 
-    genBitmapC :: String -> ([Word8], Int, Int) -> String
-    genBitmapC funcName (ws, minCP, maxCP) =
-        unlines
-            [ "{-# INLINE " <> funcName <> " #-}"
-            , funcName <> " :: Char -> Int"
-            , funcName <> " = \\c -> let n = ord c in if n >= "
-                <> show minCP
-                <> " && n <= "
-                <> show maxCP
-            , "  then lookupInt2 bitmap# n"
-            , "  else 3"
-            , "  where"
-            , "    -- Encoding on 2 bits:"
-            , "    -- • 00: No"
-            , "    -- • 01: Maybe"
-            , "    -- • 10: Yes, combining"
-            , "    -- • 11: Yes, starter"
-            , "    bitmap# = \"" <> genEnumBitmap ws "\"#\n"
-            ]
+    genBitmapC :: String -> [Word8] -> String
+    genBitmapC funcName = genEnumBitmap funcName 0 . dropWhileEnd (==0)
 
 genNumericValuesModule
     :: Monad m
