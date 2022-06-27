@@ -215,19 +215,19 @@ isNFKD = QC.isNFKD_QC
 -- result for /Normalization Form C/ __NFC__.
 {-# INLINE isNFC #-}
 isNFC :: Char -> QuickCheck
-isNFC c = case QC.isNFC_QC c of
-    3 -> Yes
-    2 -> Yes
-    1 -> Maybe
-    _ -> No
+isNFC c
+    | qc == 0   = No
+    | qc <= 8   = Yes
+    | otherwise = Maybe
+    where qc = QC.isNFC_QC c
 
 -- | Return the
 -- [Quick Check](https://www.unicode.org/reports/tr15/#Detecting_Normalization_Forms)
 -- result for /Normalization Form KD/ (__NFKC__).
 {-# INLINE isNFKC #-}
 isNFKC :: Char -> QuickCheck
-isNFKC c = case QC.isNFKC_QC c of
-    3 -> Yes
-    2 -> Yes
-    1 -> Maybe
-    _ -> No
+isNFKC c
+    | qc == 0   = No
+    | qc <= 8   = Yes
+    | otherwise = Maybe
+    where qc = QC.isNFC_QC c

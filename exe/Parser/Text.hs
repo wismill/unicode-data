@@ -686,17 +686,18 @@ genNormalizationPropertiesModule moduleName quickCheckValues =
     -- NFC & NFKC: Encode Quick_Check value on 4 bits
     -- • 0000 ( 0): No: decomposable
     -- • 0001 ( 1): Maybe, non-Jamo, decomposable
-    -- • 0010 ( 2): Maybe, non-Jamo, non-decomposable
-    -- • 0011 ( 3): Maybe, Jamo V
-    -- • 0100 ( 4): Maybe, Jamo T
-    -- • 0101 ( 5): Yes, starter, decomposable
-    -- • 0110 ( 6): Yes, starter, not decomposable, may compose with next.
-    -- • 0111 ( 7): Yes, starter, not decomposable, never compose with next.
-    -- • 1000 ( 8): Yes, combining, not decomposable
-    -- • 1001 ( 9): Yes, starter, Jamo L
-    -- • 1010 (10): Yes, starter, other Jamo
-    -- • 1011 (11): Yes, starter, Hangul precomposed syllable LV
-    -- • 1100 (12): Yes, starter, Hangul precomposed syllable LVT
+    -- • 0010 ( 2): Maybe, non-Jamo, non-decomposable, starter
+    -- • 0011 ( 3): Maybe, non-Jamo, non-decomposable, combining
+    -- • 0100 ( 4): Maybe, Jamo V
+    -- • 0101 ( 5): Maybe, Jamo T
+    -- • 1000 ( 8): Yes, starter, decomposable
+    -- • 1001 ( 9): Yes, starter, not decomposable, may compose with next.
+    -- • 1010 (10): Yes, starter, not decomposable, never compose with next.
+    -- • 1011 (11): Yes, combining, not decomposable
+    -- • 1100 (12): Yes, starter, Jamo L
+    -- • 1101 (13): Yes, starter, other Jamo
+    -- • 1110 (14): Yes, starter, Hangul precomposed syllable LV
+    -- • 1111 (15): Yes, starter, Hangul precomposed syllable LVT
     encodeC
         :: UChar.DecomposeMode
         -> [Int] -- Combining chars
@@ -715,29 +716,31 @@ genNormalizationPropertiesModule moduleName quickCheckValues =
                     ("Unexpected Maybe value for: " <> show cp)
                 QuickCheckNo    -> ( mkNo : acc
                                    , succ expected )
-                QuickCheckMaybe -> ( mkMaybe mode cp : acc
+                QuickCheckMaybe -> ( mkMaybe mode ccs cp : acc
                                    , succ expected )
 
     mkNo = 0
-    mkMaybe mode cp
-        | inRange (UChar.jamoVFirst, UChar.jamoVLast) cp = 3 -- Jamo V
-        | inRange (succ UChar.jamoTFirst, UChar.jamoTLast) cp = 4 -- Jamo T
+    mkMaybe mode ccs cp
+        | inRange (UChar.jamoVFirst, UChar.jamoVLast) cp = 4 -- Jamo V
+        | inRange (succ UChar.jamoTFirst, UChar.jamoTLast) cp = 5 -- Jamo T
         | UChar.isDecomposable mode (chr cp) = 1 -- Non-jamo, decomposable
-        | otherwise = 2 -- Non-jamo, non-decomposable
+        | isCombining ccs cp = 3 -- Non-jamo, non-decomposable, combining
+        | otherwise = 2 -- Non-jamo, non-decomposable, starter
     mkYes mode ccs xs cp
-        | inRange (UChar.jamoLFirst, UChar.jamoLLast) cp = 9 -- Jamo L
-        | inRange (UChar.jamoLFirst, UChar.jamoTLast) cp = 10 -- Other Jamo
+        | inRange (UChar.jamoLFirst, UChar.jamoLLast) cp = 12 -- Jamo L
+        | inRange (UChar.jamoLFirst, UChar.jamoTLast) cp = 13 -- Other Jamo
         | inRange (UChar.hangulFirst, UChar.hangulLast) cp =
             if (cp - UChar.hangulFirst) `rem` UChar.jamoTCount == 0
-                then 11 -- Hangul LV
-                else 12 -- Hangul LVT
-        | isCombining ccs cp = 8 -- combining, not decomposable
-        | UChar.isDecomposable mode c = 5 -- starter, decomposable
-        | mayCompose xs cp = 6 -- starter, not decomposable, may compose with next.
-        | otherwise = 7 -- starter, not decomposable, never compose with next.
+                then 14 -- Hangul LV
+                else 15 -- Hangul LVT
+        | isCombining ccs cp = 11 -- combining, not decomposable
+        | UChar.isDecomposable mode c = 8 -- starter, decomposable
+        | mayCompose xs cp = 9 -- starter, not decomposable, may compose with next.
+        | otherwise = defaultQC -- starter, not decomposable, never compose with next.
         where c = chr cp
     mayCompose = flip elem
     isCombining = flip elem
+    defaultQC = 10
 
     -- Note: No maybe
     genBitmapD :: String -> [Int] -> String
@@ -754,7 +757,7 @@ genNormalizationPropertiesModule moduleName quickCheckValues =
             ]
 
     genBitmapC :: String -> [Word8] -> String
-    genBitmapC funcName = genEnumBitmap funcName 0 . dropWhileEnd (==0)
+    genBitmapC funcName = genEnumBitmap funcName 0 . dropWhileEnd (== defaultQC)
 
 genNumericValuesModule
     :: Monad m
