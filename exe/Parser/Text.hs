@@ -46,6 +46,9 @@ import qualified Streamly.Unicode.Stream as Unicode
 
 import Prelude hiding (pred)
 
+-- [FIXME]
+import Unicode.Char.Normalization
+
 -------------------------------------------------------------------------------
 -- Types
 -------------------------------------------------------------------------------
@@ -185,7 +188,7 @@ genEnumBitmap funcName def as = unlines
                <> show (length as)
                <> " then "
                <> show (fromEnum def)
-               <> " else lookupInt8 bitmap# n"
+               <> " else lookupIntN bitmap# n"
     , "  where"
     , "    bitmap# = \"" <> enumMapToAddrLiteral as "\"#"
     ]
@@ -274,7 +277,7 @@ genGeneralCategoryModule moduleName =
         , "where"
         , ""
         , "import Data.Char (ord)"
-        , "import Unicode.Internal.Bits (lookupInt8)"
+        , "import Unicode.Internal.Bits (lookupIntN)"
         , ""
         , genEnumBitmap "generalCategory" Cn (reverse acc)
         ]
@@ -386,7 +389,7 @@ genCombiningClassModule moduleName =
             , "where"
             , ""
             , "import Data.Char (ord)"
-            , "import Unicode.Internal.Bits (lookupInt8, lookupBit64)"
+            , "import Unicode.Internal.Bits (lookupIntN, lookupBit64)"
             , ""
             , genEnumBitmap "combiningClass" 0 (reverse st1)
             , ""
@@ -645,9 +648,9 @@ genNormalizationPropertiesModule moduleName quickCheckValues =
     mkProp ccs (name, values) (props, bitmaps) =
         ( name : props
         , (: bitmaps) $ case name of
-            "NFD_QC"  -> genQuickCheckBitMapD     (prop2FuncName name) values
-            "NFKD_QC" -> genQuickCheckBitMapD     (prop2FuncName name) values
-            _         -> genQuickCheckBitMapC ccs (prop2FuncName name) values
+            "NFD_QC"  -> genQuickCheckBitMapD     (prop2FuncName name) Canonical values
+            "NFKD_QC" -> genQuickCheckBitMapD     (prop2FuncName name) Kompat    values
+            _         -> genQuickCheckBitMapC ccs (prop2FuncName name)           values
         )
 
     prop2FuncName = ("is" <>)
@@ -656,10 +659,10 @@ genNormalizationPropertiesModule moduleName quickCheckValues =
         = genBitmapD funcName
         . mapMaybe encodeD
 
-    genQuickCheckBitMapC ccs funcName
+    genQuickCheckBitMapC ccs funcName kompat
         = genBitmapC funcName
         . (\(acc, _, minCP, maxCP) -> (reverse acc, either id id minCP, maxCP))
-        . foldr (encodeC ccs) (mempty, 0, Right 0, 0)
+        . foldr (encodeC kompat ccs) (mempty, 0, Right 0, 0)
         . sortBy (flip compare)
 
     -- NFD & NFKD: Encode Quick_Check value on 1 bit
@@ -668,43 +671,52 @@ genNormalizationPropertiesModule moduleName quickCheckValues =
         QuickCheckNo    -> Just cp
         QuickCheckMaybe -> error ("Unexpected Maybe value for: " <> show cp)
 
-    -- NFC & NFKC: Encode Quick_Check value on 2 bits
-    -- • 00: No
-    -- • 01: Maybe
-    -- • 10: Yes, combining
-    -- • 11: Yes, starter
+    -- NFC & NFKC: Encode Quick_Check value on 4 bits
+    -- • 0000 ( 0): No: decomposable
+    -- • 0001 ( 1): Maybe, non-Jamo, decomposable
+    -- • 0101 ( 5): Maybe, non-Jamo, non-decomposable
+    -- • 1001 ( 9): Maybe, Jamo V
+    -- • 1101 (13): Maybe, Jamo T
+    -- • 0010 ( 2): Yes, starter, decomposable
+    -- • 0110 ( 6): Yes, starter, not decomposable, may compose with next.
+    -- • 1010 (10): Yes, starter, not decomposable, never compose with next.
+    -- • 1110 (16): Yes, combining, not decomposable
+    -- • 0011 ( 3): Yes, starter, Jamo L
+    -- • 0111 ( 7): Yes, starter, other Jamo
+    -- • 1011 (11): Yes, starter, Hangul precomposed syllable LV
+    -- • 1111 (17): Yes, starter, Hangul precomposed syllable LVT
     -- Note: here encoded reversed
     encodeC
-        :: [Int]
+        :: DecomposeMode
+        -> [Int]
         -> (Int, QuickCheck)
-        -> ([Bool], Int, Either Int Int, Int)
-        -> ([Bool], Int, Either Int Int, Int)
-    encodeC ccs v@(cp, quickCheck) (acc, expected, minCP, maxCP) =
+        -> ([Word8], Int, Either Int Int, Int)
+        -> ([Word8], Int, Either Int Int, Int)
+    encodeC kompat ccs v@(cp, quickCheck) (acc, expected, minCP, maxCP) =
         if cp > expected
-            -- Yes: check if starter
-            then if expected `elem` ccs
-                -- Yes, combining
-                then encodeC ccs v ( True : False : acc
-                                   , succ expected
-                                   , succ <$> minCP
-                                   , expected )
-                -- Yes, starter
-                else encodeC ccs v ( True : True : acc
-                                   , succ expected
-                                   , succ <$> minCP
-                                   , maxCP )
+            -- Yes
+            then encodeC ccs v ( mkYes kompat ccs c : acc
+                               , succ expected
+                               , succ <$> minCP
+                               , expected )
             -- No or Maybe
             else case quickCheck of
                 QuickCheckYes   -> error
                     ("Unexpected Maybe value for: " <> show cp)
-                QuickCheckNo    -> ( False : False : acc
+                QuickCheckNo    -> ( mkNo c : acc
                                    , succ expected
                                    , minCP >>= Left
                                    , cp )
-                QuickCheckMaybe -> ( False : True : acc
+                QuickCheckMaybe -> ( mkMaybe kompat ccs c : acc
                                    , succ expected
                                    , minCP >>= Left
                                    , cp )
+
+    mkNo c = 0
+    mkYes kompat ccs c
+        | isDecomposable
+        where mode = if kompat then Kompat else Canonical
+    mkMaybe kompat ccs c =
 
     -- Note: No maybe
     genBitmapD :: String -> [Int] -> String
@@ -719,8 +731,8 @@ genNormalizationPropertiesModule moduleName quickCheckValues =
             , "    bitmap# = \"" <> bitMapToAddrLiteral (positionsToBitMap bits) "\"#\n"
             ]
 
-    genBitmapC :: String -> ([Bool], Int, Int) -> String
-    genBitmapC funcName (bits, minCP, maxCP) =
+    genBitmapC :: String -> ([Word8], Int, Int) -> String
+    genBitmapC funcName (ws, minCP, maxCP) =
         unlines
             [ "{-# INLINE " <> funcName <> " #-}"
             , funcName <> " :: Char -> Int"
@@ -736,7 +748,7 @@ genNormalizationPropertiesModule moduleName quickCheckValues =
             , "    -- • 01: Maybe"
             , "    -- • 10: Yes, combining"
             , "    -- • 11: Yes, starter"
-            , "    bitmap# = \"" <> bitMapToAddrLiteral bits "\"#\n"
+            , "    bitmap# = \"" <> genEnumBitmap ws "\"#\n"
             ]
 
 genNumericValuesModule

@@ -14,7 +14,7 @@
 module Unicode.Internal.Bits
     ( lookupBit64
     , lookupInt2
-    , lookupInt8
+    , lookupIntN
     ) where
 
 #include "MachDeps.h"
@@ -87,7 +87,7 @@ lookupInt2 addr# (I# index#) = I# (word2Int# result##)
     pairIndex# = index'# `andI#` fbs#
     result## = word## `uncheckedShiftRL#` pairIndex# `and#` 3##
 
-{-| @lookupInt8 addr index@ looks up for the @index@-th @8@-bits word in
+{-| @lookupIntN addr index@ looks up for the @index@-th @8@-bits word in
 the bitmap starting at @addr@, then convert it to an Int.
 
 The caller must make sure that:
@@ -96,11 +96,11 @@ The caller must make sure that:
 
 @since 0.3.0
 -}
-lookupInt8
+lookupIntN
   :: Addr# -- ^ Bitmap address
   -> Int   -- ^ Word8 index
   -> Int   -- ^ Resulting word as 'Int'
-lookupInt8 addr# (I# index#) = I# (word2Int# word##)
+lookupIntN addr# (I# index#) = I# (word2Int# word##)
   where
 #if MIN_VERSION_base(4,16,0)
     word## = word8ToWord# (indexWord8OffAddr# addr# index#)
