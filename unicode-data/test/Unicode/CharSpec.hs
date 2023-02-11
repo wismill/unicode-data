@@ -5,7 +5,6 @@ module Unicode.CharSpec
   ( spec
   ) where
 
-import Control.Exception (catch, throwIO)
 import qualified Data.Char as Char
 import Data.Ix (Ix(..))
 import Data.Maybe (isJust)
@@ -21,8 +20,6 @@ import qualified Unicode.Char.Numeric as UNumeric
 import qualified Unicode.Char.Numeric.Compat as UNumericCompat
 import Data.Foldable (traverse_)
 import Test.Hspec
-import Test.HUnit.Base (assertEqual)
-import Test.HUnit.Lang (HUnitFailure)
 
 {- [NOTE]
 These tests may fail if the compiler’s Unicode version
@@ -43,15 +40,15 @@ does not match the version of this package.
 
 spec :: Spec
 spec = do
--- #ifdef COMPATIBLE_GHC_UNICODE
---   let describe' = describe
---   let it' = it
--- #else
---   let describe' t = before_ (pendingWith "Incompatible GHC Unicode version")
---                   . describe t
---   let it' t = before_ (pendingWith "Incompatible GHC Unicode version")
---             . it t
--- #endif
+#ifdef COMPATIBLE_GHC_UNICODE
+  let describe' = describe
+  let it' = it
+#else
+  let describe' t = before_ (pendingWith "Incompatible GHC Unicode version")
+                  . describe t
+  let it' t = before_ (pendingWith "Incompatible GHC Unicode version")
+            . it t
+#endif
   describe "Unicode blocks" do
     it "Characters not in any block are unassigned"
         let { check c = case UBlocks.block c of
@@ -80,12 +77,11 @@ spec = do
                     [ "Block is different for “", show c, "”. Expected: “Just "
                     , show b, "” but got: “", show b', "”." ]
         } in traverse_ check [minBound..maxBound]
-  describe "Unicode general categories" do
+  describe' "Unicode general categories" do
     it "generalCategory" do
       -- [NOTE] We cannot compare the categories directly, so use 'show'.
-      (show . UChar.generalCategory)
-        `shouldBeEqualTo` (show . Char.generalCategory)
-  describe "Character classification" do
+      (show . UChar.generalCategory) `shouldBeEqualTo` (show . Char.generalCategory)
+  describe' "Character classification" do
     it "isAlpha" do
       UChar.isAlpha `shouldBeEqualTo` Char.isAlpha
     it "isAlphaNum" do
@@ -107,19 +103,19 @@ spec = do
     it "isSymbol" do
       UChar.isSymbol `shouldBeEqualTo` Char.isSymbol
   describe "Case" do
-    it "isLower" do
+    it' "isLower" do
       UCharCompat.isLower `shouldBeEqualTo` Char.isLower
 #if MIN_VERSION_base(4,18,0)
-    it "isLowerCase" do
+    it' "isLowerCase" do
       UChar.isLowerCase `shouldBeEqualTo` Char.isLowerCase
 #endif
-    it "isUpper" do
+    it' "isUpper" do
       UCharCompat.isUpper `shouldBeEqualTo` Char.isUpper
 #if MIN_VERSION_base(4,18,0)
-    it "isUpperCase" do
+    it' "isUpperCase" do
       UChar.isUpperCase `shouldBeEqualTo` Char.isUpperCase
 #endif
-    it "toLower" do
+    it' "toLower" do
       UChar.toLower `shouldBeEqualTo` Char.toLower
     let caseCheck f (c, cs) = c `shouldSatisfy` (== cs) . f
     describe "toLowerString" do
@@ -130,7 +126,7 @@ spec = do
                            , ('1', "1")
                            , ('\x130', "i\x307") ]
             traverse_ (caseCheck UChar.toLowerString) examples
-        it "Common mapping should match simple one" do
+        it' "Common mapping should match simple one" do
             let check c = case UChar.toLowerString c of
                         [c'] -> c `shouldSatisfy` ((== c') . UChar.toLower)
                         _    -> pure ()
@@ -140,7 +136,7 @@ spec = do
                     let cf = UChar.toLowerString c'
                     in cf == foldMap UChar.toLowerString cf
             traverse_ check [minBound..maxBound]
-    it "toUpper" do
+    it' "toUpper" do
       UChar.toUpper `shouldBeEqualTo` Char.toUpper
     describe "toUpperString" do
         it "Examples" do
@@ -151,7 +147,7 @@ spec = do
                            , ('\xdf', "SS")
                            , ('\x1F52', "\x03A5\x0313\x0300") ]
             traverse_ (caseCheck UChar.toUpperString) examples
-        it "Common mapping should match simple one" do
+        it' "Common mapping should match simple one" do
             let check c = case UChar.toUpperString c of
                         [c'] -> c `shouldSatisfy` ((== c') . UChar.toUpper)
                         _    -> pure ()
@@ -161,7 +157,7 @@ spec = do
                     let cf = UChar.toUpperString c'
                     in cf == foldMap UChar.toUpperString cf
             traverse_ check [minBound..maxBound]
-    it "toTitle" do
+    it' "toTitle" do
       UChar.toTitle `shouldBeEqualTo` Char.toTitle
     describe "toTitleString" do
         it "Examples" do
@@ -173,7 +169,7 @@ spec = do
                            , ('\xfb02', "Fl")
                            , ('\x1F52', "\x03A5\x0313\x0300") ]
             traverse_ (caseCheck UChar.toTitleString) examples
-        it "Common mapping should match simple one" do
+        it' "Common mapping should match simple one" do
             let check c = case UChar.toTitleString c of
                         [c'] -> c `shouldSatisfy` ((== c') . UChar.toTitle)
                         _    -> pure ()
@@ -193,7 +189,7 @@ spec = do
                     in cf == foldMap UChar.toCaseFoldString cf
             traverse_ check [minBound..maxBound]
   describe "Numeric" do
-    it "isNumber" do
+    it' "isNumber" do
       UNumericCompat.isNumber `shouldBeEqualTo` Char.isNumber
     it "isNumber implies a numeric value" do
       -- [NOTE] the following does not hold with the current predicate `isNumber`.
@@ -203,22 +199,10 @@ spec = do
       traverse_ (`shouldSatisfy` check) [minBound..maxBound]
   where
     shouldBeEqualTo
-        :: forall b. (HasCallStack, Eq b, Show b)
-        => (Char -> b)
-        -> (Char -> b)
-        -> IO ()
-    shouldBeEqualTo f g = shouldBeEqualOr f g
-        (\c -> case Char.generalCategory c of
-            Char.NotAssigned -> True
-            _                -> False)
-    shouldBeEqualOr
-        :: forall a b. (HasCallStack, Bounded a, Enum a, Show a, Eq b, Show b)
+        :: forall a b. (Bounded a, Enum a, Show a, Eq b, Show b)
         => (a -> b)
         -> (a -> b)
-        -> (a -> Bool)
         -> IO ()
-    shouldBeEqualOr f g p = traverse_ check [minBound..maxBound]
-        where
-        -- Allow to have a richer message than `shouldSatisfy` or `shouldBe`.
-        check x = assertEqual (show x) (f x) (g x)
-            `catch` \(e :: HUnitFailure) -> if p x then pure () else throwIO e
+    shouldBeEqualTo f g =
+        let same x = f x == g x
+        in traverse_ (`shouldSatisfy` same) [minBound..maxBound]
