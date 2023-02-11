@@ -789,20 +789,23 @@ genGeneralCategoryModule moduleName =
         , "where"
         , ""
         , "import Data.Char (ord)"
+        , "import Data.Word (Word8)"
+        , "import GHC.Exts (Ptr(..))"
         , "import Unicode.Internal.Bits (lookupIntN)"
         , ""
         , "{-# INLINE generalCategory #-}"
         , "generalCategory :: Char -> Int"
         , "generalCategory c"
         , "    -- Planes 0-3"
-        , "    | cp < 0x" <> showPaddedHeX (length acc1)
-                          <> " = generalCategoryPlanes0To3 cp"
+        , "    | cp < 0x"
+                    <> showPaddedHeX (length acc1)
+                    <> " = lookupIntN planes0To3# cp"
         , "    -- Planes 4-13: Cn"
         , "    | cp < 0xE0000 = " <> show (fromEnum Cn)
         , "    -- Plane 14"
         , "    | cp < 0x"
                     <> showPaddedHeX (0xE0000 + length acc2)
-                    <> " = generalCategoryPlane14 (cp - 0xE0000)"
+                    <> " = lookupIntN plane14# (cp - 0xE0000)"
         , "    -- Plane 14: Cn"
         , "    | cp < 0xF0000 = " <> show (fromEnum Cn)
         , "    -- Plane 15: Co"
@@ -814,18 +817,18 @@ genGeneralCategoryModule moduleName =
         , "    -- Default: Cn"
         , "    | otherwise = " <> show (fromEnum Cn)
         , "    where cp = ord c"
+        , "          !(Ptr planes0To3#) = generalCategoryPlanes0To3"
+        , "          !(Ptr plane14#) = generalCategoryPlane14"
         , ""
         , "{-# NOINLINE generalCategoryPlanes0To3 #-}"
-        , "generalCategoryPlanes0To3 :: Int -> Int"
-        , "generalCategoryPlanes0To3 = lookupIntN bitmap#"
-        , "    where"
-        , "    bitmap# = \"" <> enumMapToAddrLiteral (reverse acc1) "\"#"
+        , "generalCategoryPlanes0To3 :: Ptr Word8"
+        , "generalCategoryPlanes0To3 = Ptr"
+        , "    \"" <> enumMapToAddrLiteral (reverse acc1) "\"#"
         , ""
         , "{-# NOINLINE generalCategoryPlane14 #-}"
-        , "generalCategoryPlane14 :: Int -> Int"
-        , "generalCategoryPlane14 = lookupIntN bitmap#"
-        , "    where"
-        , "    bitmap# = \"" <> enumMapToAddrLiteral (reverse acc2) "\"#"
+        , "generalCategoryPlane14 :: Ptr Word8"
+        , "generalCategoryPlane14 = Ptr"
+        , "    \"" <> enumMapToAddrLiteral (reverse acc2) "\"#"
         ]
 
 readDecomp :: String -> (Maybe DecompType, Decomp)
