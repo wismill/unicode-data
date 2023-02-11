@@ -749,17 +749,38 @@ genGeneralCategoryModule moduleName =
 
     where
 
-    -- (categories, expected char)
-    initial = ([], '\0')
+    -- (categories planes 0-3, categories plane 14, expected char)
+    initial = ([], [], '\0')
 
-    step (acc, p) a = if p < _char a
+    step :: ([GeneralCategory], [GeneralCategory], Char)
+         -> DetailedChar
+         -> ([GeneralCategory], [GeneralCategory], Char)
+    step acc@(acc1, acc2, p) a
+        -- Plane 0 to 3, missing char
         -- Fill missing char entry with default category Cn
         -- See: https://www.unicode.org/reports/tr44/#Default_Values_Table
-        then step (Cn : acc, succ p) a
-        -- Regular entry
-        else (_generalCategory a : acc, succ (_char a))
+        | plane0To3 && p < c = step (Cn : acc1, acc2, succ p) a
+        -- Plane 0 to 3, Regular entry
+        | plane0To3 = (_generalCategory a : acc1, acc2, succ (_char a))
+        -- Plane 4 to 13: no entry expected
+        | plane4To13 = error ("Unexpected char in plane 4-13: " <> show a)
+        -- Plane 15 to 16: skip if PUA
+        | plane15To16 = case _generalCategory a of
+            Co -> acc -- skip
+            _  -> error ("Unexpected char in plane 15-16: " <> show a)
+        -- Leap to plane 14
+        | p < '\xE0000' = step (acc1, acc2, '\xE0000') a
+        -- Plane 14, missing char
+        | p < c = step (acc1, Cn : acc2, succ p) a
+        -- Plane 14, regular entry
+        | otherwise = (acc1, _generalCategory a : acc2, succ (_char a))
+        where
+        c = _char a
+        plane0To3 = c <= '\x3FFFF'
+        plane4To13 = c <= '\xDFFFF'
+        plane15To16 = c >= '\xF0000'
 
-    done (acc, _) = unlines
+    done (acc1, acc2, _) = unlines
         [ apacheLicense 2020 moduleName
         , "{-# OPTIONS_HADDOCK hide #-}"
         , ""
@@ -770,7 +791,41 @@ genGeneralCategoryModule moduleName =
         , "import Data.Char (ord)"
         , "import Unicode.Internal.Bits (lookupIntN)"
         , ""
-        , genEnumBitmap "generalCategory" Cn (reverse acc)
+        , "{-# INLINE generalCategory #-}"
+        , "generalCategory :: Char -> Int"
+        , "generalCategory c"
+        , "    -- Planes 0-3"
+        , "    | cp < 0x" <> showPaddedHeX (length acc1)
+                          <> " = generalCategoryPlanes0To3 cp"
+        , "    -- Planes 4-13: Cn"
+        , "    | cp < 0xE0000 = " <> show (fromEnum Cn)
+        , "    -- Plane 14"
+        , "    | cp < 0x"
+                    <> showPaddedHeX (0xE0000 + length acc2)
+                    <> " = generalCategoryPlane14 (cp - 0xE0000)"
+        , "    -- Plane 14: Cn"
+        , "    | cp < 0xF0000 = " <> show (fromEnum Cn)
+        , "    -- Plane 15: Co"
+        , "    | cp < 0xFFFFE = " <> show (fromEnum Co)
+        , "    -- Plane 15: Cn"
+        , "    | cp < 0x100000 = " <> show (fromEnum Cn)
+        , "    -- Plane 16: Co"
+        , "    | cp < 0x10FFFE = " <> show (fromEnum Co)
+        , "    -- Default: Cn"
+        , "    | otherwise = " <> show (fromEnum Cn)
+        , "    where cp = ord c"
+        , ""
+        , "{-# NOINLINE generalCategoryPlanes0To3 #-}"
+        , "generalCategoryPlanes0To3 :: Int -> Int"
+        , "generalCategoryPlanes0To3 = lookupIntN bitmap#"
+        , "    where"
+        , "    bitmap# = \"" <> enumMapToAddrLiteral (reverse acc1) "\"#"
+        , ""
+        , "{-# NOINLINE generalCategoryPlane14 #-}"
+        , "generalCategoryPlane14 :: Int -> Int"
+        , "generalCategoryPlane14 = lookupIntN bitmap#"
+        , "    where"
+        , "    bitmap# = \"" <> enumMapToAddrLiteral (reverse acc2) "\"#"
         ]
 
 readDecomp :: String -> (Maybe DecompType, Decomp)
