@@ -124,6 +124,7 @@ test-suite test
   build-depends:
       base             >= 4.7   && < 4.19
     , hspec            >= 2.0   && < 2.11
+    , HUnit
     , unicode-data
   -- We need to match a GHC version with the same Unicode version.
   -- See: test/Unicode/CharSpec.hs for compatibility table.
