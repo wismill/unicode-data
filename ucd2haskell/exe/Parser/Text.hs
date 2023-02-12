@@ -798,14 +798,16 @@ genGeneralCategoryModule moduleName =
         , "generalCategory c"
         , "    -- Planes 0-3"
         , "    | cp < 0x"
-                    <> showPaddedHeX (length acc1)
-                    <> " = lookupIntN planes0To3# cp"
+                    <> showPaddedHeX lengthAcc1
+                    <> " = lookupIntN bitmap# cp"
         , "    -- Planes 4-13: Cn"
         , "    | cp < 0xE0000 = " <> show (fromEnum Cn)
         , "    -- Plane 14"
         , "    | cp < 0x"
                     <> showPaddedHeX (0xE0000 + length acc2)
-                    <> " = lookupIntN plane14# (cp - 0xE0000)"
+                    <> " = lookupIntN bitmap# (cp - 0x"
+                    <> showPaddedHeX (0xE0000 - lengthAcc1)
+                    <> ")"
         , "    -- Plane 14: Cn"
         , "    | cp < 0xF0000 = " <> show (fromEnum Cn)
         , "    -- Plane 15: Co"
@@ -817,19 +819,14 @@ genGeneralCategoryModule moduleName =
         , "    -- Default: Cn"
         , "    | otherwise = " <> show (fromEnum Cn)
         , "    where cp = ord c"
-        , "          !(Ptr planes0To3#) = generalCategoryPlanes0To3"
-        , "          !(Ptr plane14#) = generalCategoryPlane14"
+        , "          !(Ptr bitmap#) = generalCategoryBitmap"
         , ""
-        , "{-# NOINLINE generalCategoryPlanes0To3 #-}"
-        , "generalCategoryPlanes0To3 :: Ptr Word8"
-        , "generalCategoryPlanes0To3 = Ptr"
-        , "    \"" <> enumMapToAddrLiteral (reverse acc1) "\"#"
-        , ""
-        , "{-# NOINLINE generalCategoryPlane14 #-}"
-        , "generalCategoryPlane14 :: Ptr Word8"
-        , "generalCategoryPlane14 = Ptr"
-        , "    \"" <> enumMapToAddrLiteral (reverse acc2) "\"#"
+        , "{-# NOINLINE generalCategoryBitmap #-}"
+        , "generalCategoryBitmap :: Ptr Word8"
+        , "generalCategoryBitmap = Ptr"
+        , "    \"" <> enumMapToAddrLiteral (reverse (acc2 <> acc1)) "\"#"
         ]
+        where lengthAcc1 = length acc1
 
 readDecomp :: String -> (Maybe DecompType, Decomp)
 readDecomp s =
