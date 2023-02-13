@@ -119,25 +119,25 @@ main = defaultMain
     , bgroup "isWhiteSpace"
       [ benchChars "unicode-data"  G.isWhiteSpace
       ]
-    -- Korean Hangul Characters
-    , bgroup "isHangul"
-      [ benchChars "unicode-data"  G.isHangul
-      ]
-    , bgroup "isHangulLV"
-      [ benchChars "unicode-data"  G.isHangul
-      ]
-    , bgroup "isJamo"
-      [ benchChars "unicode-data"  G.isJamo
-      ]
-    , bgroup "jamoLIndex"
-      [ benchChars "unicode-data"  G.jamoLIndex
-      ]
-    , bgroup "jamoVIndex"
-      [ benchChars "unicode-data"  G.jamoVIndex
-      ]
-    , bgroup "jamoTIndex"
-      [ benchChars "unicode-data"  G.jamoTIndex
-      ]
+    -- -- Korean Hangul Characters
+    -- , bgroup "isHangul"
+    --   [ benchChars "unicode-data"  G.isHangul
+    --   ]
+    -- , bgroup "isHangulLV"
+    --   [ benchChars "unicode-data"  G.isHangul
+    --   ]
+    -- , bgroup "isJamo"
+    --   [ benchChars "unicode-data"  G.isJamo
+    --   ]
+    -- , bgroup "jamoLIndex"
+    --   [ benchChars "unicode-data"  G.jamoLIndex
+    --   ]
+    -- , bgroup "jamoVIndex"
+    --   [ benchChars "unicode-data"  G.jamoVIndex
+    --   ]
+    -- , bgroup "jamoTIndex"
+    --   [ benchChars "unicode-data"  G.jamoTIndex
+    --   ]
     ]
   , bgroup "Unicode.Char.General.Blocks"
     [ bgroup "block"
@@ -273,7 +273,7 @@ main = defaultMain
     benchCharsNF t isValid f =
         -- Avoid side-effects with garbage collection (see tasty-bench doc)
         env
-            (evaluate (force chars)) -- initialize
+            (evaluate (force (mconcat (replicate 6 chars)))) -- initialize
             (bench t . nf (foldString f)) -- benchmark
         where
         chars = filter isValid [minBound..maxBound]
