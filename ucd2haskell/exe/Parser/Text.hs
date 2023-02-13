@@ -164,15 +164,12 @@ genBitmap funcName ordList = mconcat
     , genSignature funcName, "\n"
     , func, "\n"
     , "{-# NOINLINE ", bitmapLookup, " #-}\n"
-    -- , bitmapLookup, " :: Ptr Word8\n"
-    -- , bitmapLookup, " = Ptr\n"
-    , bitmapLookup, " :: Int -> Bool\n"
-    , bitmapLookup, " = lookupBit64\n"
+    , bitmapLookup, " :: Ptr Word8\n"
+    , bitmapLookup, " = Ptr\n"
     , "    \"", bitMapToAddrLiteral bitmap "\"#\n" ]
     where
     rawBitmap = positionsToBitMap ordList
-    -- bitmapLookup = funcName <> "Bitmap"
-    bitmapLookup = funcName <> "Lookup"
+    bitmapLookup = funcName <> "Bitmap"
     (func, bitmap) = if length rawBitmap <= 0x40000
         -- Only planes 0-3
         then
@@ -182,10 +179,9 @@ genBitmap funcName ordList = mconcat
                 , showPaddedHeX (minimum ordList)
                 , " && cp <= 0x"
                 , showPaddedHeX (maximum ordList)
-                -- , " && lookupBit64 bitmap# cp\n"
-                -- , "   where\n"
-                -- , "   !(Ptr bitmap#) = ", bitmapLookup, "\n" ]
-                , " && ", bitmapLookup, " cp\n" ]
+                , " && lookupBit64 bitmap# cp\n"
+                , "   where\n"
+                , "   !(Ptr bitmap#) = ", bitmapLookup, "\n" ]
             , rawBitmap )
         -- Planes 0-3 and 14
         else
@@ -202,19 +198,16 @@ genBitmap funcName ordList = mconcat
                             , " = False\n" ]
                         else ""
                     , "    | cp < 0x", showPaddedHeX bound1
-                    -- , " = lookupBit64 bitmap# cp\n"
-                    , " = ", bitmapLookup, "cp\n"
+                    , " = lookupBit64 bitmap# cp\n"
                     , "    | cp < 0xE0000 = False\n"
                     , "    | cp < 0x", showPaddedHeX bound2
-                    -- , " = lookupBit64 bitmap# (cp - 0x"
-                    , " = ", bitmapLookup, "(cp - 0x"
+                    , " = lookupBit64 bitmap# (cp - 0x"
                     , showPaddedHeX (0xE0000 - bound1)
                     , ")\n"
                     , "    | otherwise = False\n"
                     , "    where\n"
-                    -- , "    cp = ord c\n"
-                    -- , "    !(Ptr bitmap#) = ", bitmapLookup, "\n" ]
-                    , "    cp = ord c\n" ]
+                    , "    cp = ord c\n"
+                    , "    !(Ptr bitmap#) = ", bitmapLookup, "\n" ]
                 , planes0To3 <> plane14 )
     splitPlanes xs =
         let planes0To3 = dropWhileEnd not (take 0x40000 xs);
