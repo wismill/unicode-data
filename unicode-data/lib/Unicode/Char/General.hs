@@ -268,16 +268,9 @@ prop> isAlphaNum c == Data.Char.isAlphaNum c
 @since 0.3.0
 -}
 isAlphaNum :: Char -> Bool
-isAlphaNum c = case generalCategory c of
-    UppercaseLetter -> True
-    LowercaseLetter -> True
-    TitlecaseLetter -> True
-    ModifierLetter  -> True
-    OtherLetter     -> True
-    DecimalNumber   -> True
-    LetterNumber    -> True
-    OtherNumber     -> True
-    _               -> False
+isAlphaNum c =
+    gc <= UC.OtherLetter || (UC.DecimalNumber <= gc && gc <= UC.OtherNumber)
+    where gc = UC.generalCategory c
 
 {-| Selects control characters, which are the non-printing characters
 of the Latin-1 subset of Unicode.
@@ -289,9 +282,7 @@ prop> isControl c == Data.Char.isControl c
 @since 0.3.0
 -}
 isControl :: Char -> Bool
-isControl c = case generalCategory c of
-    Control -> True
-    _       -> False
+isControl c = UC.generalCategory c == UC.Control
 
 {-| Selects Unicode mark characters, for example accents and the
 like, which combine with preceding characters.
@@ -308,11 +299,8 @@ prop> isMark c == Data.Char.isMark c
 @since 0.3.0
 -}
 isMark :: Char -> Bool
-isMark c = case generalCategory c of
-    NonSpacingMark       -> True
-    SpacingCombiningMark -> True
-    EnclosingMark        -> True
-    _                    -> False
+isMark c = UC.NonSpacingMark <= gc && gc <= UC.EnclosingMark
+    where gc = UC.generalCategory c
 
 {-| Selects printable Unicode characters (letters, numbers, marks, punctuation,
 symbols and spaces).
@@ -333,15 +321,12 @@ prop> isPrint c == Data.Char.isPrint c
 @since 0.3.0
 -}
 isPrint :: Char -> Bool
-isPrint c = case generalCategory c of
-    LineSeparator      -> False
-    ParagraphSeparator -> False
-    Control            -> False
-    Format             -> False
-    Surrogate          -> False
-    PrivateUse         -> False
-    NotAssigned        -> False
-    _                  -> True
+isPrint c
+    =  gc == UC.LineSeparator
+    || gc == UC.ParagraphSeparator
+    || gc >= UC.Control
+    where
+    gc = UC.generalCategory c
 
 {-| Selects Unicode punctuation characters, including various kinds
 of connectors, brackets and quotes.
@@ -362,15 +347,8 @@ prop> isPunctuation c == Data.Char.isPunctuation c
 @since 0.3.0
 -}
 isPunctuation :: Char -> Bool
-isPunctuation c = case generalCategory c of
-    ConnectorPunctuation -> True
-    DashPunctuation      -> True
-    OpenPunctuation      -> True
-    ClosePunctuation     -> True
-    InitialQuote         -> True
-    FinalQuote           -> True
-    OtherPunctuation     -> True
-    _                    -> False
+isPunctuation c = UC.ConnectorPunctuation <= gc && gc <= UC.OtherPunctuation
+    where gc = UC.generalCategory c
 
 {- | Returns 'True' for any whitespace characters, and the control
 characters @\\t@, @\\n@, @\\r@, @\\f@, @\\v@.
@@ -404,11 +382,8 @@ prop> isSeparator c == Data.Char.isSeparator c
 @since 0.3.0
 -}
 isSeparator :: Char -> Bool
-isSeparator c = case generalCategory c of
-    Space              -> True
-    LineSeparator      -> True
-    ParagraphSeparator -> True
-    _                  -> False
+isSeparator c = UC.Space <= gc && gc <= UC.ParagraphSeparator
+    where gc = UC.generalCategory c
 
 {-| Selects Unicode symbol characters, including mathematical and currency symbols.
 
@@ -424,12 +399,8 @@ prop> isSymbol c == Data.Char.isSymbol c
 @since 0.3.0
 -}
 isSymbol :: Char -> Bool
-isSymbol c = case generalCategory c of
-    MathSymbol     -> True
-    CurrencySymbol -> True
-    ModifierSymbol -> True
-    OtherSymbol    -> True
-    _              -> False
+isSymbol c = UC.MathSymbol <= gc && gc <= UC.OtherSymbol
+    where gc = UC.generalCategory c
 
 -- | Returns 'True' for alphabetic Unicode characters (lower-case, upper-case
 -- and title-case letters, plus letters of caseless scripts and modifiers

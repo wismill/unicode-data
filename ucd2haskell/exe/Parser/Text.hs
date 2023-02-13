@@ -830,15 +830,136 @@ genGeneralCategoryModule moduleName =
     done (acc1, acc2, _) = unlines
         [ apacheLicense 2020 moduleName
         , "{-# OPTIONS_HADDOCK hide #-}"
+        , "{-# LANGUAGE PatternSynonyms #-}"
         , ""
         , "module " <> moduleName
-        , "(generalCategory)"
+        , "( generalCategory"
+        , ", pattern UppercaseLetter"
+        , ", pattern LowercaseLetter"
+        , ", pattern TitlecaseLetter"
+        , ", pattern ModifierLetter"
+        , ", pattern OtherLetter"
+        , ", pattern NonSpacingMark"
+        , ", pattern SpacingCombiningMark"
+        , ", pattern EnclosingMark"
+        , ", pattern DecimalNumber"
+        , ", pattern LetterNumber"
+        , ", pattern OtherNumber"
+        , ", pattern ConnectorPunctuation"
+        , ", pattern DashPunctuation"
+        , ", pattern OpenPunctuation"
+        , ", pattern ClosePunctuation"
+        , ", pattern InitialQuote"
+        , ", pattern FinalQuote"
+        , ", pattern OtherPunctuation"
+        , ", pattern MathSymbol"
+        , ", pattern CurrencySymbol"
+        , ", pattern ModifierSymbol"
+        , ", pattern OtherSymbol"
+        , ", pattern Space"
+        , ", pattern LineSeparator"
+        , ", pattern ParagraphSeparator"
+        , ", pattern Control"
+        , ", pattern Format"
+        , ", pattern Surrogate"
+        , ", pattern PrivateUse"
+        , ", pattern NotAssigned )"
         , "where"
         , ""
         , "import Data.Char (ord)"
         , "import Data.Word (Word8)"
         , "import GHC.Exts (Ptr(..))"
         , "import Unicode.Internal.Bits (lookupIntN)"
+        , ""
+        , "pattern UppercaseLetter :: Int"
+        , "pattern UppercaseLetter = " <> show (fromEnum Lu)
+        , ""
+        , "pattern LowercaseLetter :: Int"
+        , "pattern LowercaseLetter = " <> show (fromEnum Ll)
+        , ""
+        , "pattern TitlecaseLetter :: Int"
+        , "pattern TitlecaseLetter = " <> show (fromEnum Lt)
+        , ""
+        , "pattern ModifierLetter :: Int"
+        , "pattern ModifierLetter = " <> show (fromEnum Lm)
+        , ""
+        , "pattern OtherLetter :: Int"
+        , "pattern OtherLetter = " <> show (fromEnum Lo)
+        , ""
+        , "pattern NonSpacingMark :: Int"
+        , "pattern NonSpacingMark = " <> show (fromEnum Mn)
+        , ""
+        , "pattern SpacingCombiningMark :: Int"
+        , "pattern SpacingCombiningMark = " <> show (fromEnum Mc)
+        , ""
+        , "pattern EnclosingMark :: Int"
+        , "pattern EnclosingMark = " <> show (fromEnum Me)
+        , ""
+        , "pattern DecimalNumber :: Int"
+        , "pattern DecimalNumber = " <> show (fromEnum Nd)
+        , ""
+        , "pattern LetterNumber :: Int"
+        , "pattern LetterNumber = " <> show (fromEnum Nl)
+        , ""
+        , "pattern OtherNumber :: Int"
+        , "pattern OtherNumber = " <> show (fromEnum No)
+        , ""
+        , "pattern ConnectorPunctuation :: Int"
+        , "pattern ConnectorPunctuation = " <> show (fromEnum Pc)
+        , ""
+        , "pattern DashPunctuation :: Int"
+        , "pattern DashPunctuation = " <> show (fromEnum Pd)
+        , ""
+        , "pattern OpenPunctuation :: Int"
+        , "pattern OpenPunctuation = " <> show (fromEnum Ps)
+        , ""
+        , "pattern ClosePunctuation :: Int"
+        , "pattern ClosePunctuation = " <> show (fromEnum Pe)
+        , ""
+        , "pattern InitialQuote :: Int"
+        , "pattern InitialQuote = " <> show (fromEnum Pi)
+        , ""
+        , "pattern FinalQuote :: Int"
+        , "pattern FinalQuote = " <> show (fromEnum Pf)
+        , ""
+        , "pattern OtherPunctuation :: Int"
+        , "pattern OtherPunctuation = " <> show (fromEnum Po)
+        , ""
+        , "pattern MathSymbol :: Int"
+        , "pattern MathSymbol = " <> show (fromEnum Sm)
+        , ""
+        , "pattern CurrencySymbol :: Int"
+        , "pattern CurrencySymbol = " <> show (fromEnum Sc)
+        , ""
+        , "pattern ModifierSymbol :: Int"
+        , "pattern ModifierSymbol = " <> show (fromEnum Sk)
+        , ""
+        , "pattern OtherSymbol :: Int"
+        , "pattern OtherSymbol = " <> show (fromEnum So)
+        , ""
+        , "pattern Space :: Int"
+        , "pattern Space = " <> show (fromEnum Zs)
+        , ""
+        , "pattern LineSeparator :: Int"
+        , "pattern LineSeparator = " <> show (fromEnum Zl)
+        , ""
+        , "pattern ParagraphSeparator :: Int"
+        , "pattern ParagraphSeparator = " <> show (fromEnum Zp)
+        , ""
+        , "pattern Control :: Int"
+        , "pattern Control = " <> show (fromEnum Cc)
+        , ""
+        , "pattern Format :: Int"
+        , "pattern Format = " <> show (fromEnum Cf)
+        , ""
+        , "pattern Surrogate :: Int"
+        , "pattern Surrogate = " <> show (fromEnum Cs)
+        , ""
+        , "pattern PrivateUse :: Int"
+        , "pattern PrivateUse = " <> show (fromEnum Co)
+        , ""
+        , "pattern NotAssigned :: Int"
+        , "pattern NotAssigned = " <> show (fromEnum Cn)
         , ""
         , "{-# INLINE generalCategory #-}"
         , "generalCategory :: Char -> Int"

@@ -7,15 +7,136 @@
 -- Stability   : experimental
 
 {-# OPTIONS_HADDOCK hide #-}
+{-# LANGUAGE PatternSynonyms #-}
 
 module Unicode.Internal.Char.UnicodeData.GeneralCategory
-(generalCategory)
+( generalCategory
+, pattern UppercaseLetter
+, pattern LowercaseLetter
+, pattern TitlecaseLetter
+, pattern ModifierLetter
+, pattern OtherLetter
+, pattern NonSpacingMark
+, pattern SpacingCombiningMark
+, pattern EnclosingMark
+, pattern DecimalNumber
+, pattern LetterNumber
+, pattern OtherNumber
+, pattern ConnectorPunctuation
+, pattern DashPunctuation
+, pattern OpenPunctuation
+, pattern ClosePunctuation
+, pattern InitialQuote
+, pattern FinalQuote
+, pattern OtherPunctuation
+, pattern MathSymbol
+, pattern CurrencySymbol
+, pattern ModifierSymbol
+, pattern OtherSymbol
+, pattern Space
+, pattern LineSeparator
+, pattern ParagraphSeparator
+, pattern Control
+, pattern Format
+, pattern Surrogate
+, pattern PrivateUse
+, pattern NotAssigned )
 where
 
 import Data.Char (ord)
 import Data.Word (Word8)
 import GHC.Exts (Ptr(..))
 import Unicode.Internal.Bits (lookupIntN)
+
+pattern UppercaseLetter :: Int
+pattern UppercaseLetter = 0
+
+pattern LowercaseLetter :: Int
+pattern LowercaseLetter = 1
+
+pattern TitlecaseLetter :: Int
+pattern TitlecaseLetter = 2
+
+pattern ModifierLetter :: Int
+pattern ModifierLetter = 3
+
+pattern OtherLetter :: Int
+pattern OtherLetter = 4
+
+pattern NonSpacingMark :: Int
+pattern NonSpacingMark = 5
+
+pattern SpacingCombiningMark :: Int
+pattern SpacingCombiningMark = 6
+
+pattern EnclosingMark :: Int
+pattern EnclosingMark = 7
+
+pattern DecimalNumber :: Int
+pattern DecimalNumber = 8
+
+pattern LetterNumber :: Int
+pattern LetterNumber = 9
+
+pattern OtherNumber :: Int
+pattern OtherNumber = 10
+
+pattern ConnectorPunctuation :: Int
+pattern ConnectorPunctuation = 11
+
+pattern DashPunctuation :: Int
+pattern DashPunctuation = 12
+
+pattern OpenPunctuation :: Int
+pattern OpenPunctuation = 13
+
+pattern ClosePunctuation :: Int
+pattern ClosePunctuation = 14
+
+pattern InitialQuote :: Int
+pattern InitialQuote = 15
+
+pattern FinalQuote :: Int
+pattern FinalQuote = 16
+
+pattern OtherPunctuation :: Int
+pattern OtherPunctuation = 17
+
+pattern MathSymbol :: Int
+pattern MathSymbol = 18
+
+pattern CurrencySymbol :: Int
+pattern CurrencySymbol = 19
+
+pattern ModifierSymbol :: Int
+pattern ModifierSymbol = 20
+
+pattern OtherSymbol :: Int
+pattern OtherSymbol = 21
+
+pattern Space :: Int
+pattern Space = 22
+
+pattern LineSeparator :: Int
+pattern LineSeparator = 23
+
+pattern ParagraphSeparator :: Int
+pattern ParagraphSeparator = 24
+
+pattern Control :: Int
+pattern Control = 25
+
+pattern Format :: Int
+pattern Format = 26
+
+pattern Surrogate :: Int
+pattern Surrogate = 27
+
+pattern PrivateUse :: Int
+pattern PrivateUse = 28
+
+pattern NotAssigned :: Int
+pattern NotAssigned = 29
 
 {-# INLINE generalCategory #-}
 generalCategory :: Char -> Int
