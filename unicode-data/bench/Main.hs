@@ -82,8 +82,8 @@ main = defaultMain
   , bgroup "Unicode.Char.General"
     -- Character classification
     [ bgroup' "generalCategory"
-      [ Bench "base"          (show . Char.generalCategory)
-      , Bench "unicode-data"  (show . G.generalCategory)
+      [ Bench "base"          (fromEnum . Char.generalCategory)
+      , Bench "unicode-data"  (fromEnum . G.generalCategory)
       ]
     , bgroup "isAlphabetic"
       [ benchChars "unicode-data"  G.isAlphabetic
