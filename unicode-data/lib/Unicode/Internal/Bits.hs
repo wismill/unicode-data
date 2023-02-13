@@ -13,7 +13,8 @@
 
 module Unicode.Internal.Bits
     ( lookupBit64,
-      lookupIntN
+      lookupIntN,
+      lookupWord8
     ) where
 
 #include "MachDeps.h"
@@ -22,10 +23,11 @@ import Data.Bits (finiteBitSize, popCount)
 import GHC.Exts
        (Addr#, Int(..), Word(..),
         indexWordOffAddr#, indexWord8OffAddr#,
+        indexInt8OffAddr#,
         andI#, uncheckedIShiftRL#,
         and#, word2Int#, uncheckedShiftL#)
 #if MIN_VERSION_base(4,16,0)
-import GHC.Exts (word8ToWord#)
+import GHC.Exts (word8ToWord#, int8ToInt#)
 #endif
 #ifdef WORDS_BIGENDIAN
 import GHC.Exts (byteSwap#)
@@ -68,7 +70,19 @@ lookupIntN
   :: Addr# -- ^ Bitmap address
   -> Int   -- ^ Word index
   -> Int   -- ^ Resulting word as 'Int'
-lookupIntN addr# (I# index#) = I# (word2Int# word##)
+lookupIntN addr# (I# index#) = I# int#
+  where
+#if MIN_VERSION_base(4,16,0)
+    int# = int8ToInt# (indexInt8OffAddr# addr# index#)
+#else
+    int# = indexInt8OffAddr# addr# index#
+#endif
+
+lookupWord8
+  :: Addr# -- ^ Bitmap address
+  -> Int   -- ^ Word index
+  -> Int   -- ^ Resulting word as 'Int'
+lookupWord8 addr# (I# index#) = I# (word2Int# word##)
   where
 #if MIN_VERSION_base(4,16,0)
     word## = word8ToWord# (indexWord8OffAddr# addr# index#)

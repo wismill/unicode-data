@@ -259,20 +259,22 @@ bitMapToAddrLiteral bs cs = foldr encode cs (unfoldr mkChunks bs)
 genEnumBitmap
   :: forall a. (Bounded a, Enum a, Show a)
   => String
+  -- ^ Lookup function
+  -> String
   -- ^ Function name
   -> a
   -- ^ Default value
   -> [a]
   -- ^ List of values to encode
   -> String
-genEnumBitmap funcName def as = unlines
+genEnumBitmap lookupFun funcName def as = unlines
     [ "{-# INLINE " <> funcName <> " #-}"
     , funcName <> " :: Char -> Int"
     , funcName <> " c = let n = ord c in if n >= "
                <> show (length as)
                <> " then "
                <> show (fromEnum def)
-               <> " else lookupIntN bitmap# n"
+               <> " else " <> lookupFun <> " bitmap# n"
     , "  where"
     , "    bitmap# = \"" <> enumMapToAddrLiteral as "\"#"
     ]
@@ -515,7 +517,7 @@ genScriptsModule moduleName aliases =
             , "import Data.Int (Int32)"
             , "import Data.Ix (Ix)"
             , "import GHC.Exts (Ptr(..))"
-            , "import Unicode.Internal.Bits (lookupIntN)"
+            , "import Unicode.Internal.Bits (lookupWord8)"
             , ""
             , "-- | Unicode [script](https://www.unicode.org/reports/tr24/)."
             , "--"
@@ -661,7 +663,7 @@ genScriptsModule moduleName aliases =
                 else (script:acc, succ c)
             def = getScript defaultScript
             getScript s = fromMaybe (error "script not found") (elemIndex s scripts)
-        in genEnumBitmap "script" def (reverse charScripts')
+        in genEnumBitmap "lookupWord8" "script" def (reverse charScripts')
 
     rangeToCharScripts :: (String -> b) -> ScriptLine -> [(Char, b)]
     rangeToCharScripts f (script, r) = case r of
@@ -753,7 +755,7 @@ genScriptExtensionsModule moduleName aliases extensions =
         , "-- | Script extensions of a character."
         , "--"
         , "-- @since 0.1.0"
-        , genEnumBitmap "scriptExtensions" def (mkScriptExtensions exts)
+        , genEnumBitmap "lookupWord8" "scriptExtensions" def (mkScriptExtensions exts)
         ]
 
     mkDecodeScriptExtensions :: Set.Set [String] -> String
@@ -1662,7 +1664,7 @@ genIdentifierTypeModule moduleName =
         , "    _ -> " <> hackHaskellConstructor def
         , ""
         , "-- | Returns the 'IdentifierType's corresponding to a character."
-        , genEnumBitmap "identifierTypes" 0 (reverse identifiersTypes)
+        , genEnumBitmap "lookupIntN" "identifierTypes" 0 (reverse identifiersTypes)
         ]
 
 genConfusablesModule
