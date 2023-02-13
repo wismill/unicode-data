@@ -163,7 +163,7 @@ genBitmap funcName ordList = mconcat
     [ "{-# INLINE " <> funcName <> " #-}\n"
     , genSignature funcName, "\n"
     , func, "\n"
-    , "{-# NOINLINE ", bitmapLookup, " #-}\n"
+    -- , "{-# NOINLINE ", bitmapLookup, " #-}\n"
     , bitmapLookup, " :: Ptr Word8\n"
     , bitmapLookup, " = Ptr\n"
     , "    \"", bitMapToAddrLiteral bitmap "\"#\n" ]
@@ -866,7 +866,7 @@ genGeneralCategoryModule moduleName =
         , "    where cp = ord c"
         , "          !(Ptr bitmap#) = generalCategoryBitmap"
         , ""
-        , "{-# NOINLINE generalCategoryBitmap #-}"
+        -- , "{-# NOINLINE generalCategoryBitmap #-}"
         , "generalCategoryBitmap :: Ptr Word8"
         , "generalCategoryBitmap = Ptr"
         , "    \"" <> enumMapToAddrLiteral (reverse (acc2 <> acc1)) "\"#"
