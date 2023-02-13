@@ -98,8 +98,14 @@ spec = do
       UChar.isPunctuation `shouldBeEqualTo` Char.isPunctuation
     it "isSeparator" do
       UChar.isSeparator `shouldBeEqualTo` Char.isSeparator
-    it "isSpace" do
-      UCharCompat.isSpace `shouldBeEqualTo` Char.isSpace
+    describe "isSpace" do
+      it "Check max codepoint with Space" do
+        '\x3000' `shouldBe` foldr
+            (\c -> if UChar.generalCategory c == UChar.Space then max c else id)
+            ' '
+            [minBound..maxBound]
+      it "Compare to base" do
+        UCharCompat.isSpace `shouldBeEqualTo` Char.isSpace
     it "isSymbol" do
       UChar.isSymbol `shouldBeEqualTo` Char.isSymbol
   describe "Case" do

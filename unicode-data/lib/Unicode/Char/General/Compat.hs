@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 -- |
 -- Module      : Unicode.Char.General.Compat
 -- Copyright   : (c) 2020 Composewell Technologies and Contributors
@@ -17,7 +19,8 @@ module Unicode.Char.General.Compat
     , isSpace
     ) where
 
-import Unicode.Char.General (GeneralCategory(..), generalCategory)
+import Data.Char (ord)
+import qualified Unicode.Internal.Char.UnicodeData.GeneralCategory as UC
 
 -- | Same as 'isLetter'.
 --
@@ -47,13 +50,7 @@ prop> isLetter c == Data.Char.isLetter c
 -}
 {-# INLINE isLetter #-}
 isLetter :: Char -> Bool
-isLetter c = case generalCategory c of
-    UppercaseLetter -> True
-    LowercaseLetter -> True
-    TitlecaseLetter -> True
-    ModifierLetter  -> True
-    OtherLetter     -> True
-    _               -> False
+isLetter c = UC.generalCategory c <= UC.OtherLetter
 
 {-| Selects Unicode space characters (general category 'Space'),
 and the control characters @\\t@, @\\n@, @\\r@, @\\f@, @\\v@.
@@ -71,11 +68,14 @@ prop> isSpace c == Data.Char.isSpace c
 @since 0.3.0
 -}
 isSpace :: Char -> Bool
-isSpace '\t' = True
-isSpace '\n' = True
-isSpace '\v' = True
-isSpace '\f' = True
-isSpace '\r' = True
-isSpace c = case generalCategory c of
-    Space -> True
-    _     -> False
+isSpace = \case
+    '\t' -> True
+    '\n' -> True
+    '\v' -> True
+    '\f' -> True
+    '\r' -> True
+    -- NOTE: 0x3000 is the max code point with generalCategory == Space
+    --       It should be updated if the test suite fails.
+    --       generalCategoryPlanes0To3 accept code points up to 0x3FFFF.
+    c -> cp <= 0x3000 && UC.generalCategoryPlanes0To3 cp == UC.Space
+        where cp = ord c
