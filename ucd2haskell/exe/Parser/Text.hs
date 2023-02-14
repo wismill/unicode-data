@@ -292,7 +292,7 @@ genEnumBitmap funcName (defPUA, pPUA) (def, pDef) planes0To3 plane14 = mconcat
     , "    !(Ptr bitmap#) = ", bitmapLookup, "\n\n"
     , bitmapLookup, " :: Ptr Word8\n"
     , bitmapLookup, " = Ptr\n"
-    , "    \"", enumMapToAddrLiteral bitmap "\"#"
+    , "    \"", enumMapToAddrLiteral 4 0xff bitmap "\"#"
     ]
     where
     bitmapLookup = funcName <> "Bitmap"
@@ -366,22 +366,63 @@ __Note:__ 'Enum' instance must respect the following:
 -}
 enumMapToAddrLiteral
   :: forall a. (Bounded a, Enum a, Show a)
-  => [a]
+  => Word8
+  -- ^ Indentation
+  -> Int
+  -- ^ Chunk size
+  -> [a]
   -- ^ Values to encode
   -> String
   -- ^ String to append
   -> String
-enumMapToAddrLiteral xs cs = foldr go cs xs
+enumMapToAddrLiteral indentation chunkSize =
+    chunkAddrLiteral indentation chunkSize addWord
 
     where
 
-    go :: a -> String -> String
-    go x acc = '\\' : shows (toWord8 x) acc
+    addWord :: a -> String -> String
+    addWord x acc = '\\' : shows (toWord8 x) acc
 
     toWord8 :: a -> Word8
     toWord8 a = let w = fromEnum a in if 0 <= w && w <= 0xff
         then fromIntegral w
         else error $ "Cannot convert to Word8: " <> show a
+
+chunkAddrLiteral
+  :: forall a. (Bounded a, Enum a, Show a)
+  => Word8
+  -- ^ Indentation
+  -> Int
+  -- ^ Chunk size
+  -> (a -> String -> String)
+  -- ^ Function to convert to 'Word8' and prepend to the accumulator
+  -> [a]
+  -- ^ Values to encode
+  -> String
+  -- ^ String to append
+  -> String
+chunkAddrLiteral indentation chunkSize addWord xs cs
+    = fst
+    . foldr go (cs, id : repeat indent)
+    $ chunksOf chunkSize xs
+
+    where
+
+    indent = indent' indentation . ('\\' :)
+    indent' = \case
+        0 -> \s -> '\\' : '\n' : s
+        i -> indent' (pred i) . (' ' :)
+
+    go :: [a] -> (String, [String -> String]) -> (String, [String -> String])
+    go as (acc, seps) = (foldr addWord (head seps acc) as, tail seps)
+
+chunksOf :: Int -> [a] -> [[a]]
+chunksOf i = go
+    where
+    go = \case
+        [] -> []
+        as -> b : go as'
+            where (b, as') = splitAt i as
 
 -- Encode Word32 to [Word8] little endian
 word32ToWord8s :: Word32 -> [Word8]
@@ -438,17 +479,15 @@ genBlocksModule moduleName = done <$> Fold.foldl' step initial
 
     done (blocks, defs, ranges) = let ranges' = reverse ranges in unlines
         [ apacheLicense 2022 moduleName
-        , "{-# LANGUAGE CPP, MultiWayIf #-}"
         , "{-# OPTIONS_HADDOCK hide #-}"
         , ""
         , "module " <> moduleName
         , "(Block(..), BlockDefinition(..), block, blockDefinition)"
         , "where"
         , ""
-        , "#include \"MachDeps.h\""
-        , ""
         , "import Data.Ix (Ix)"
         , "import GHC.Exts"
+        , "import Unicode.Internal.Bits (lookupWord32#)"
         , ""
         , "-- | Unicode [block](https://www.unicode.org/glossary/#block)."
         , "--"
@@ -507,21 +546,11 @@ genBlocksModule moduleName = done <$> Fold.foldl' step initial
         , "                    else let block# = cpL0# `uncheckedShiftRL#` 21#"
         , "                         in Just (I# (word2Int# block#))"
         , ""
-        , "    getRawCodePoint# k# ="
-        , "#ifdef WORDS_BIGENDIAN"
-        , "#if MIN_VERSION_base(4,16,0)"
-        , "        narrow32Word# (byteSwap32# (word32ToWord# (indexWord32OffAddr# ranges# k#)))"
-        , "#else"
-        , "        narrow32Word# (byteSwap32# (indexWord32OffAddr# ranges# k#))"
-        , "#endif"
-        , "#elif MIN_VERSION_base(4,16,0)"
-        , "        word32ToWord# (indexWord32OffAddr# ranges# k#)"
-        , "#else"
-        , "        indexWord32OffAddr# ranges# k#"
-        , "#endif"
+        , "    getRawCodePoint# = lookupWord32# ranges#"
         , ""
         , "    -- Encoded ranges"
-        , "    ranges# = \"" <> enumMapToAddrLiteral (mkRanges ranges') "\"#"
+        , "    ranges# ="
+        , "        \"" <> enumMapToAddrLiteral 8 0xff (mkRanges ranges') "\"#"
         ]
 
     initial :: ([String], [String], [(Int, Int)])
@@ -1487,7 +1516,6 @@ genNamesModule moduleName =
 
     done (names, offsets, _) = unlines
         [ apacheLicense 2022 moduleName
-        , "{-# LANGUAGE CPP #-}"
         , "{-# LANGUAGE OverloadedStrings #-}"
         , "{-# OPTIONS_HADDOCK hide #-}"
         , ""
@@ -1495,10 +1523,9 @@ genNamesModule moduleName =
         , "(name)"
         , "where"
         , ""
-        , "#include \"MachDeps.h\""
-        , ""
         , "import Foreign.C.String (CString)"
         , "import GHC.Exts"
+        , "import Unicode.Internal.Bits (lookupInt32#)"
         , ""
         , "-- | Name of a character, if defined."
         , "--"
@@ -1521,33 +1548,28 @@ genNamesModule moduleName =
         , "        else"
         , "            let k# = l# +# uncheckedIShiftRL# (u# -# l#) 1#"
         , "                j# = k# `uncheckedIShiftL#` 1#"
-        , "                cp'# = indexInt32OffAddr'# j#"
+        , "                cp'# = getRawCodePoint# j#"
         , "            in if isTrue# (cp'# <# cp#)"
         , "                then getName (k# +# 1#) u#"
         , "                else if isTrue# (cp'# ==# cp#)"
-        , "                    then let offset# = indexInt32OffAddr'# (j# +# 1#)"
+        , "                    then let offset# = getRawCodePoint# (j# +# 1#)"
         , "                         in Just (Ptr (names# `plusAddr#` offset#))"
         , "                    else getName l# (k# -# 1#)"
-        , "    indexInt32OffAddr'# :: Int# -> Int#"
-        , "    indexInt32OffAddr'# k# ="
-        , "#ifdef WORDS_BIGENDIAN"
-        , "#if MIN_VERSION_base(4,16,0)"
-        , "        word2Int# (narrow32Word# (byteSwap32# (word32ToWord# (indexWord32OffAddr# offsets# k#))))"
-        , "#else"
-        , "        word2Int# (narrow32Word# (byteSwap32# (indexWord32OffAddr# offsets# k#)))"
-        , "#endif"
-        , "#elif MIN_VERSION_base(4,16,0)"
-        , "        int32ToInt# (indexInt32OffAddr# offsets# k#)"
-        , "#else"
-        , "        indexInt32OffAddr# offsets# k#"
-        , "#endif"
         , ""
-        , "    names# = "
-        -- Note: names are ASCII
-            <> shows (mconcat (reverse names)) "#"
-        , "    offsets# = \""
-            <> enumMapToAddrLiteral (mconcat (reverse offsets)) "\"#"
+        , "    getRawCodePoint# = lookupInt32# offsets#"
+        , ""
+        , "    names# ="
+        , "        \""
+            <> chunkAddrLiteral 8 0xff shows' (mconcat (reverse names)) "\"#"
+        , "    offsets# ="
+        , "        \""
+            <> enumMapToAddrLiteral 8 0xff (mconcat (reverse offsets)) "\"#"
         ]
+        where
+        shows' = \case
+            '\0' -> \s -> '\\' : '0' : s
+            -- Note: names are ASCII
+            c    -> (c :)
 
 genAliasesModule
     :: Monad m
