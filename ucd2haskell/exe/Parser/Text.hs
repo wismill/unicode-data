@@ -153,7 +153,7 @@ showPaddedHeX :: Int -> String
 showPaddedHeX = fmap toUpper . showPaddedHex
 
 showHexCodepoint :: Char -> String
-showHexCodepoint = showPaddedHex . ord
+showHexCodepoint = showPaddedHeX . ord
 
 genBitmap :: HasCallStack => String -> [Int] -> String
 genBitmap funcName ordList = mconcat
@@ -2517,7 +2517,7 @@ parseDerivedNameLines
     mkName :: String -> Char -> CharName
     mkName template char = CharName
         { _nChar = char
-        , _nName = template <> fmap toUpper (showHexCodepoint char) }
+        , _nName = template <> showHexCodepoint char }
 
 -------------------------------------------------------------------------------
 -- Parsing Identifier_Status
