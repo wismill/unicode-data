@@ -10,8 +10,11 @@
 {-# LANGUAGE PatternSynonyms #-}
 
 module Unicode.Internal.Char.UnicodeData.GeneralCategory
-( generalCategory
+( -- * Lookup functions
+  generalCategory
 , generalCategoryPlanes0To3
+
+  -- * General categories
 , pattern UppercaseLetter
 , pattern LowercaseLetter
 , pattern TitlecaseLetter
@@ -41,7 +44,13 @@ module Unicode.Internal.Char.UnicodeData.GeneralCategory
 , pattern Format
 , pattern Surrogate
 , pattern PrivateUse
-, pattern NotAssigned )
+, pattern NotAssigned
+
+  -- * Characters bounds for predicates
+, pattern MaxIsLetter
+, pattern MaxIsAlphaNum
+, pattern MaxIsSpace
+, pattern MaxIsSeparator )
 where
 
 import Data.Char (ord)
@@ -49,95 +58,141 @@ import Data.Word (Word8)
 import GHC.Exts (Ptr(..))
 import Unicode.Internal.Bits (lookupIntN)
 
+-- | General category Lu
 pattern UppercaseLetter :: Int
 pattern UppercaseLetter = 0
 
+-- | General category Ll
 pattern LowercaseLetter :: Int
 pattern LowercaseLetter = 1
 
+-- | General category Lt
 pattern TitlecaseLetter :: Int
 pattern TitlecaseLetter = 2
 
+-- | General category Lm
 pattern ModifierLetter :: Int
 pattern ModifierLetter = 3
 
+-- | General category Lo
 pattern OtherLetter :: Int
 pattern OtherLetter = 4
 
+-- | General category Mn
 pattern NonSpacingMark :: Int
 pattern NonSpacingMark = 5
 
+-- | General category Mc
 pattern SpacingCombiningMark :: Int
 pattern SpacingCombiningMark = 6
 
+-- | General category Me
 pattern EnclosingMark :: Int
 pattern EnclosingMark = 7
 
+-- | General category Nd
 pattern DecimalNumber :: Int
 pattern DecimalNumber = 8
 
+-- | General category Nl
 pattern LetterNumber :: Int
 pattern LetterNumber = 9
 
+-- | General category No
 pattern OtherNumber :: Int
 pattern OtherNumber = 10
 
+-- | General category Pc
 pattern ConnectorPunctuation :: Int
 pattern ConnectorPunctuation = 11
 
+-- | General category Pd
 pattern DashPunctuation :: Int
 pattern DashPunctuation = 12
 
+-- | General category Ps
 pattern OpenPunctuation :: Int
 pattern OpenPunctuation = 13
 
+-- | General category Pe
 pattern ClosePunctuation :: Int
 pattern ClosePunctuation = 14
 
+-- | General category Pi
 pattern InitialQuote :: Int
 pattern InitialQuote = 15
 
+-- | General category Pf
 pattern FinalQuote :: Int
 pattern FinalQuote = 16
 
+-- | General category Po
 pattern OtherPunctuation :: Int
 pattern OtherPunctuation = 17
 
+-- | General category Sm
 pattern MathSymbol :: Int
 pattern MathSymbol = 18
 
+-- | General category Sc
 pattern CurrencySymbol :: Int
 pattern CurrencySymbol = 19
 
+-- | General category Sk
 pattern ModifierSymbol :: Int
 pattern ModifierSymbol = 20
 
+-- | General category So
 pattern OtherSymbol :: Int
 pattern OtherSymbol = 21
 
+-- | General category Zs
 pattern Space :: Int
 pattern Space = 22
 
+-- | General category Zl
 pattern LineSeparator :: Int
 pattern LineSeparator = 23
 
+-- | General category Zp
 pattern ParagraphSeparator :: Int
 pattern ParagraphSeparator = 24
 
+-- | General category Cc
 pattern Control :: Int
 pattern Control = 25
 
+-- | General category Cf
 pattern Format :: Int
 pattern Format = 26
 
+-- | General category Cs
 pattern Surrogate :: Int
 pattern Surrogate = 27
 
+-- | General category Co
 pattern PrivateUse :: Int
 pattern PrivateUse = 28
 
+-- | General category Cn
 pattern NotAssigned :: Int
 pattern NotAssigned = 29
+
+-- | Maximum codepoint satisfying @isLetter@
+pattern MaxIsLetter :: Int
+pattern MaxIsLetter = 0x323AF
+
+-- | Maximum codepoint satisfying @isAlphaNum@
+pattern MaxIsAlphaNum :: Int
+pattern MaxIsAlphaNum = 0x323AF
+
+-- | Maximum codepoint satisfying @isSpace@
+pattern MaxIsSpace :: Int
+pattern MaxIsSpace = 0x3000
+
+-- | Maximum codepoint satisfying @isSeparator@
+pattern MaxIsSeparator :: Int
+pattern MaxIsSeparator = 0x3000
 
 {-# INLINE generalCategoryPlanes0To3 #-}
 generalCategoryPlanes0To3 :: Int -> Int
@@ -151,19 +206,19 @@ generalCategory c
     -- Planes 0-3
     | cp < 0x323B0 = lookupIntN bitmap# cp
     -- Planes 4-13: Cn
-    | cp < 0xE0000 = 29
+    | cp < 0xE0000 = NotAssigned
     -- Plane 14
     | cp < 0xE01F0 = lookupIntN bitmap# (cp - 0xADC50)
     -- Plane 14: Cn
-    | cp < 0xF0000 = 29
+    | cp < 0xF0000 = NotAssigned
     -- Plane 15: Co
-    | cp < 0xFFFFE = 28
+    | cp < 0xFFFFE = PrivateUse
     -- Plane 15: Cn
-    | cp < 0x100000 = 29
+    | cp < 0x100000 = NotAssigned
     -- Plane 16: Co
-    | cp < 0x10FFFE = 28
+    | cp < 0x10FFFE = PrivateUse
     -- Default: Cn
-    | otherwise = 29
+    | otherwise = NotAssigned
     where
     cp = ord c
     !(Ptr bitmap#) = generalCategoryBitmap

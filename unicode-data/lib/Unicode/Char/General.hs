@@ -269,8 +269,16 @@ prop> isAlphaNum c == Data.Char.isAlphaNum c
 -}
 isAlphaNum :: Char -> Bool
 isAlphaNum c =
-    gc <= UC.OtherLetter || (UC.DecimalNumber <= gc && gc <= UC.OtherNumber)
-    where gc = UC.generalCategory c
+    let !cp = ord c
+    -- NOTE: The guard constant is updated at each Unicode revision.
+    --       It must be < 0x40000 to be accepted by generalCategoryPlanes0To3.
+    in cp <= UC.MaxIsAlphaNum &&
+        let !gc = UC.generalCategoryPlanes0To3 cp
+        in gc <= UC.OtherLetter ||
+           (UC.DecimalNumber <= gc && gc <= UC.OtherNumber)
+    -- Use the following in case the previous code is not valid anymore:
+    -- gc <= UC.OtherLetter || (UC.DecimalNumber <= gc && gc <= UC.OtherNumber)
+    -- where !gc = UC.generalCategory c
 
 {-| Selects control characters, which are the non-printing characters
 of the Latin-1 subset of Unicode.
@@ -383,8 +391,16 @@ prop> isSeparator c == Data.Char.isSeparator c
 @since 0.3.0
 -}
 isSeparator :: Char -> Bool
-isSeparator c = UC.Space <= gc && gc <= UC.ParagraphSeparator
-    where gc = UC.generalCategory c
+isSeparator c =
+    let !cp = ord c
+    -- NOTE: The guard constant is updated at each Unicode revision.
+    --       It must be < 0x40000 to be accepted by generalCategoryPlanes0To3.
+    in cp <= UC.MaxIsSeparator &&
+        let !gc = UC.generalCategoryPlanes0To3 cp
+        in UC.Space <= gc && gc <= UC.ParagraphSeparator
+    -- Use the following in case the previous code is not valid anymore:
+    -- UC.Space <= gc && gc <= UC.ParagraphSeparator
+    -- where gc = UC.generalCategory c
 
 {-| Selects Unicode symbol characters, including mathematical and currency symbols.
 

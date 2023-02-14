@@ -50,7 +50,15 @@ prop> isLetter c == Data.Char.isLetter c
 -}
 {-# INLINE isLetter #-}
 isLetter :: Char -> Bool
-isLetter c = UC.generalCategory c <= UC.OtherLetter
+isLetter c =
+    let !cp = ord c
+    -- NOTE: The guard constant is updated at each Unicode revision.
+    --       It must be < 0x40000 to be accepted by generalCategoryPlanes0To3.
+    in cp <= UC.MaxIsLetter &&
+        let !gc = UC.generalCategoryPlanes0To3 cp
+        in gc <= UC.OtherLetter
+    -- Use the following in case the previous code is not valid anymore:
+    -- UC.generalCategory c <= UC.OtherLetter
 
 {-| Selects Unicode space characters (general category 'Space'),
 and the control characters @\\t@, @\\n@, @\\r@, @\\f@, @\\v@.
@@ -68,14 +76,13 @@ prop> isSpace c == Data.Char.isSpace c
 @since 0.3.0
 -}
 isSpace :: Char -> Bool
-isSpace = \case
+-- NOTE: The guard constant is updated at each Unicode revision.
+--       It must be < 0x40000 to be accepted by generalCategoryPlanes0To3.
+isSpace c = cp <= UC.MaxIsSpace && case c of
     '\t' -> True
     '\n' -> True
     '\v' -> True
     '\f' -> True
     '\r' -> True
-    -- NOTE: 0x3000 is the max code point with generalCategory == Space
-    --       It should be updated if the test suite fails.
-    --       generalCategoryPlanes0To3 accept code points up to 0x3FFFF.
-    c -> cp <= 0x3000 && UC.generalCategoryPlanes0To3 cp == UC.Space
-        where cp = ord c
+    _    -> UC.generalCategoryPlanes0To3 cp == UC.Space
+    where cp = ord c

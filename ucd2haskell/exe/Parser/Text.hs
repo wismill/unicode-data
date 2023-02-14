@@ -155,6 +155,39 @@ showPaddedHeX = fmap toUpper . showPaddedHex
 showHexCodepoint :: Char -> String
 showHexCodepoint = showPaddedHeX . ord
 
+generalCategoryConstructor :: GeneralCategory -> String
+generalCategoryConstructor = \case
+    Lu -> "UppercaseLetter"
+    Ll -> "LowercaseLetter"
+    Lt -> "TitlecaseLetter"
+    Lm -> "ModifierLetter"
+    Lo -> "OtherLetter"
+    Mn -> "NonSpacingMark"
+    Mc -> "SpacingCombiningMark"
+    Me -> "EnclosingMark"
+    Nd -> "DecimalNumber"
+    Nl -> "LetterNumber"
+    No -> "OtherNumber"
+    Pc -> "ConnectorPunctuation"
+    Pd -> "DashPunctuation"
+    Ps -> "OpenPunctuation"
+    Pe -> "ClosePunctuation"
+    Pi -> "InitialQuote"
+    Pf -> "FinalQuote"
+    Po -> "OtherPunctuation"
+    Sm -> "MathSymbol"
+    Sc -> "CurrencySymbol"
+    Sk -> "ModifierSymbol"
+    So -> "OtherSymbol"
+    Zs -> "Space"
+    Zl -> "LineSeparator"
+    Zp -> "ParagraphSeparator"
+    Cc -> "Control"
+    Cf -> "Format"
+    Cs -> "Surrogate"
+    Co -> "PrivateUse"
+    Cn -> "NotAssigned"
+
 genBitmap :: HasCallStack => String -> [Int] -> String
 genBitmap funcName ordList = mconcat
     [ "{-# INLINE " <> funcName <> " #-}\n"
@@ -203,17 +236,6 @@ genBitmap funcName ordList = mconcat
                     , "    where\n"
                     , "    cp = ord c\n" ]
                 , planes0To3 <> plane14 )
-    -- splitPlanes xs =
-    --     let planes0To3 = dropWhileEnd not (take 0x40000 xs);
-    --         planes4To16 = drop 0x40000 xs
-    --         planes4To13 = take (0xE0000 - 0x40000) planes4To16
-    --         planes14To16 = drop (0xE0000 - 0x40000) planes4To16
-    --         plane14 = dropWhileEnd not (take (0xF0000 - 0xE0000) planes14To16)
-    --         planes15To16 = drop (0xF0000 - 0xE0000) planes14To16
-    --     in if all not planes4To13 && all not planes15To16
-    --         then (planes0To3, plane14)
-    --         else error "genBitmap: cannot build"
-
 
 positionsToBitMap :: [Int] -> [Bool]
 positionsToBitMap = go 0
@@ -254,16 +276,16 @@ genEnumBitmap
   :: forall a. (HasCallStack, Bounded a, Enum a, Eq a, Show a)
   => String
   -- ^ Function name
-  -> a
+  -> (a, String)
   -- ^ Value for planes 15-16
-  -> a
+  -> (a, String)
   -- ^ Default value
   -> [a]
   -- ^ List of values to encode for planes 0 to 3
   -> [a]
   -- ^ List of values to encode for plane 14
   -> String
-genEnumBitmap funcName defPUA def planes0To3 plane14 = mconcat
+genEnumBitmap funcName (defPUA, pPUA) (def, pDef) planes0To3 plane14 = mconcat
     [ "{-# INLINE ", funcName, " #-}\n"
     , funcName, " :: Char -> Int\n"
     , funcName, func
@@ -285,7 +307,7 @@ genEnumBitmap funcName defPUA def planes0To3 plane14 = mconcat
                 [ " = \\c -> let cp = ord c in if cp >= 0x"
                 , showPaddedHeX (length planes0To3')
                 , " then "
-                , show (fromEnum def)
+                , pDef
                 , " else lookupIntN bitmap# cp\n"
                 , "    where\n" ]
             , planes0To3' )
@@ -300,7 +322,7 @@ genEnumBitmap funcName defPUA def planes0To3 plane14 = mconcat
                     , "    | cp < 0x", showPaddedHeX bound1
                                      , " = lookupIntN bitmap# cp\n"
                     , "    -- Planes 4-13: ", show def, "\n"
-                    , "    | cp < 0xE0000 = " <> show (fromEnum def), "\n"
+                    , "    | cp < 0xE0000 = " <> pDef, "\n"
                     , "    -- Plane 14\n"
                     , "    | cp < 0x", showPaddedHeX bound2
                                      , " = lookupIntN bitmap# (cp - 0x"
@@ -310,15 +332,15 @@ genEnumBitmap funcName defPUA def planes0To3 plane14 = mconcat
                         then ""
                         else mconcat
                             [ "    -- Plane 14: ", show def, "\n"
-                            , "    | cp < 0xF0000 = ", show (fromEnum def), "\n"
+                            , "    | cp < 0xF0000 = ", pDef, "\n"
                             , "    -- Plane 15: ", show defPUA, "\n"
-                            , "    | cp < 0xFFFFE = ", show (fromEnum defPUA), "\n"
+                            , "    | cp < 0xFFFFE = ", pPUA, "\n"
                             , "    -- Plane 15: ", show def, "\n"
-                            , "    | cp < 0x100000 = " <> show (fromEnum def), "\n"
+                            , "    | cp < 0x100000 = " <> pDef, "\n"
                             , "    -- Plane 16: ", show defPUA, "\n"
-                            , "    | cp < 0x10FFFE = " <> show (fromEnum defPUA), "\n" ]
+                            , "    | cp < 0x10FFFE = " <> pPUA, "\n" ]
                     , "    -- Default: ", show def, "\n"
-                    , "    | otherwise = " <> show (fromEnum def), "\n"
+                    , "    | otherwise = " <> pDef, "\n"
                     , "    where\n"
                     , "    cp = ord c\n" ]
                 , planes0To3' <> plane14' )
@@ -722,7 +744,12 @@ genScriptsModule moduleName aliases =
             getScript s = fromMaybe (error "script not found") (elemIndex s scripts)
             -- [TODO] simplify
             (planes0To3, plane14) = splitPlanes "Cannot generate: genScriptsModule" (== def) charScripts'
-        in genEnumBitmap "script" def def planes0To3 plane14
+        in genEnumBitmap
+            "script"
+            (def, show (fromEnum def))
+            (def, show (fromEnum def))
+            planes0To3
+            plane14
 
     rangeToCharScripts :: (String -> b) -> ScriptLine -> [(Char, b)]
     rangeToCharScripts f (script, r) = case r of
@@ -816,7 +843,12 @@ genScriptExtensionsModule moduleName aliases extensions =
         , "-- | Script extensions of a character."
         , "--"
         , "-- @since 0.1.0"
-        , genEnumBitmap "scriptExtensions" def def planes0To3 plane14
+        , genEnumBitmap
+            "scriptExtensions"
+            (def, show (fromEnum def))
+            (def, show (fromEnum def))
+            planes0To3
+            plane14
         ]
         where
         scriptExtensions = mkScriptExtensions exts
@@ -855,6 +887,27 @@ genScriptExtensionsModule moduleName aliases extensions =
 -- Parsing UnicodeData.txt
 -------------------------------------------------------------------------------
 
+data CharBounds = CharBounds
+    { maxIsLetter    :: !Char
+    , maxIsAlphaNum  :: !Char
+    , maxIsSpace     :: !Char
+    , maxIsSeparator :: !Char }
+
+updateCharBounds :: CharBounds -> Char -> GeneralCategory -> CharBounds
+updateCharBounds acc@CharBounds{..} c = \case
+    Lu -> acc{maxIsAlphaNum=max maxIsAlphaNum c, maxIsLetter=max maxIsLetter c}
+    Ll -> acc{maxIsAlphaNum=max maxIsAlphaNum c, maxIsLetter=max maxIsLetter c}
+    Lt -> acc{maxIsAlphaNum=max maxIsAlphaNum c, maxIsLetter=max maxIsLetter c}
+    Lm -> acc{maxIsAlphaNum=max maxIsAlphaNum c, maxIsLetter=max maxIsLetter c}
+    Lo -> acc{maxIsAlphaNum=max maxIsAlphaNum c, maxIsLetter=max maxIsLetter c}
+    Nd -> acc{maxIsAlphaNum=max maxIsAlphaNum c}
+    Nl -> acc{maxIsAlphaNum=max maxIsAlphaNum c}
+    No -> acc{maxIsAlphaNum=max maxIsAlphaNum c}
+    Zs -> acc{maxIsSeparator=max maxIsAlphaNum c, maxIsSpace=max maxIsSpace c}
+    Zl -> acc{maxIsSeparator=max maxIsAlphaNum c}
+    Zp -> acc{maxIsSeparator=max maxIsAlphaNum c}
+    _  -> acc
+
 genGeneralCategoryModule
     :: Monad m
     => String
@@ -865,179 +918,100 @@ genGeneralCategoryModule moduleName =
     where
 
     -- (categories planes 0-3, categories plane 14, expected char)
-    initial = ([], [], '\0')
+    initial = ([], [], minBound, CharBounds minBound minBound minBound minBound)
 
-    step :: ([GeneralCategory], [GeneralCategory], Char)
+    step :: ([GeneralCategory], [GeneralCategory], Char, CharBounds)
          -> DetailedChar
-         -> ([GeneralCategory], [GeneralCategory], Char)
-    step acc@(acc1, acc2, p) a
+         -> ([GeneralCategory], [GeneralCategory], Char, CharBounds)
+    step acc@(acc1, acc2, p, bounds) a
         -- Plane 0 to 3, missing char
         -- Fill missing char entry with default category Cn
         -- See: https://www.unicode.org/reports/tr44/#Default_Values_Table
-        | plane0To3 && p < c = step (Cn : acc1, acc2, succ p) a
+        | plane0To3 && p < c = step (Cn : acc1, acc2, succ p, bounds)
+            a
         -- Plane 0 to 3, Regular entry
-        | plane0To3 = (_generalCategory a : acc1, acc2, succ (_char a))
+        | plane0To3 =
+            ( generalCategory : acc1
+            , acc2
+            , succ c
+            , updateCharBounds bounds c generalCategory )
         -- Plane 4 to 13: no entry expected
         | plane4To13 = error ("Unexpected char in plane 4-13: " <> show a)
         -- Plane 15 to 16: skip if PUA
-        | plane15To16 = case _generalCategory a of
+        | plane15To16 = case generalCategory of
             Co -> acc -- skip
             _  -> error ("Unexpected char in plane 15-16: " <> show a)
         -- Leap to plane 14
-        | p < '\xE0000' = step (acc1, acc2, '\xE0000') a
+        | p < '\xE0000' = step (acc1, acc2, '\xE0000', bounds) a
         -- Plane 14, missing char
-        | p < c = step (acc1, Cn : acc2, succ p) a
+        | p < c = step (acc1, Cn : acc2, succ p, bounds) a
         -- Plane 14, regular entry
-        | otherwise = (acc1, _generalCategory a : acc2, succ (_char a))
+        | otherwise =
+            ( acc1
+            , generalCategory : acc2
+            , succ c
+            , updateCharBounds bounds c generalCategory )
         where
         c = _char a
+        generalCategory = _generalCategory a
         plane0To3 = c <= '\x3FFFF'
         plane4To13 = c <= '\xDFFFF'
         plane15To16 = c >= '\xF0000'
 
-    done (acc1, acc2, _) = unlines
+    done (acc1, acc2, _, CharBounds{..}) = unlines
         [ apacheLicense 2020 moduleName
         , "{-# OPTIONS_HADDOCK hide #-}"
         , "{-# LANGUAGE PatternSynonyms #-}"
         , ""
         , "module " <> moduleName
-        , "( generalCategory"
+        , "( -- * Lookup functions"
+        , "  generalCategory"
         , ", generalCategoryPlanes0To3"
-        , ", pattern UppercaseLetter"
-        , ", pattern LowercaseLetter"
-        , ", pattern TitlecaseLetter"
-        , ", pattern ModifierLetter"
-        , ", pattern OtherLetter"
-        , ", pattern NonSpacingMark"
-        , ", pattern SpacingCombiningMark"
-        , ", pattern EnclosingMark"
-        , ", pattern DecimalNumber"
-        , ", pattern LetterNumber"
-        , ", pattern OtherNumber"
-        , ", pattern ConnectorPunctuation"
-        , ", pattern DashPunctuation"
-        , ", pattern OpenPunctuation"
-        , ", pattern ClosePunctuation"
-        , ", pattern InitialQuote"
-        , ", pattern FinalQuote"
-        , ", pattern OtherPunctuation"
-        , ", pattern MathSymbol"
-        , ", pattern CurrencySymbol"
-        , ", pattern ModifierSymbol"
-        , ", pattern OtherSymbol"
-        , ", pattern Space"
-        , ", pattern LineSeparator"
-        , ", pattern ParagraphSeparator"
-        , ", pattern Control"
-        , ", pattern Format"
-        , ", pattern Surrogate"
-        , ", pattern PrivateUse"
-        , ", pattern NotAssigned )"
+        , ""
+        , "  -- * General categories"
+        , foldMap mkGeneralCategoryExport [minBound..maxBound]
+        , "  -- * Characters bounds for predicates"
+        , ", pattern MaxIsLetter"
+        , ", pattern MaxIsAlphaNum"
+        , ", pattern MaxIsSpace"
+        , ", pattern MaxIsSeparator )"
         , "where"
         , ""
         , "import Data.Char (ord)"
         , "import Data.Word (Word8)"
         , "import GHC.Exts (Ptr(..))"
         , "import Unicode.Internal.Bits (lookupIntN)"
-        , ""
-        , "pattern UppercaseLetter :: Int"
-        , "pattern UppercaseLetter = " <> show (fromEnum Lu)
-        , ""
-        , "pattern LowercaseLetter :: Int"
-        , "pattern LowercaseLetter = " <> show (fromEnum Ll)
-        , ""
-        , "pattern TitlecaseLetter :: Int"
-        , "pattern TitlecaseLetter = " <> show (fromEnum Lt)
-        , ""
-        , "pattern ModifierLetter :: Int"
-        , "pattern ModifierLetter = " <> show (fromEnum Lm)
-        , ""
-        , "pattern OtherLetter :: Int"
-        , "pattern OtherLetter = " <> show (fromEnum Lo)
-        , ""
-        , "pattern NonSpacingMark :: Int"
-        , "pattern NonSpacingMark = " <> show (fromEnum Mn)
-        , ""
-        , "pattern SpacingCombiningMark :: Int"
-        , "pattern SpacingCombiningMark = " <> show (fromEnum Mc)
-        , ""
-        , "pattern EnclosingMark :: Int"
-        , "pattern EnclosingMark = " <> show (fromEnum Me)
-        , ""
-        , "pattern DecimalNumber :: Int"
-        , "pattern DecimalNumber = " <> show (fromEnum Nd)
-        , ""
-        , "pattern LetterNumber :: Int"
-        , "pattern LetterNumber = " <> show (fromEnum Nl)
-        , ""
-        , "pattern OtherNumber :: Int"
-        , "pattern OtherNumber = " <> show (fromEnum No)
-        , ""
-        , "pattern ConnectorPunctuation :: Int"
-        , "pattern ConnectorPunctuation = " <> show (fromEnum Pc)
-        , ""
-        , "pattern DashPunctuation :: Int"
-        , "pattern DashPunctuation = " <> show (fromEnum Pd)
-        , ""
-        , "pattern OpenPunctuation :: Int"
-        , "pattern OpenPunctuation = " <> show (fromEnum Ps)
-        , ""
-        , "pattern ClosePunctuation :: Int"
-        , "pattern ClosePunctuation = " <> show (fromEnum Pe)
-        , ""
-        , "pattern InitialQuote :: Int"
-        , "pattern InitialQuote = " <> show (fromEnum Pi)
-        , ""
-        , "pattern FinalQuote :: Int"
-        , "pattern FinalQuote = " <> show (fromEnum Pf)
-        , ""
-        , "pattern OtherPunctuation :: Int"
-        , "pattern OtherPunctuation = " <> show (fromEnum Po)
-        , ""
-        , "pattern MathSymbol :: Int"
-        , "pattern MathSymbol = " <> show (fromEnum Sm)
-        , ""
-        , "pattern CurrencySymbol :: Int"
-        , "pattern CurrencySymbol = " <> show (fromEnum Sc)
-        , ""
-        , "pattern ModifierSymbol :: Int"
-        , "pattern ModifierSymbol = " <> show (fromEnum Sk)
-        , ""
-        , "pattern OtherSymbol :: Int"
-        , "pattern OtherSymbol = " <> show (fromEnum So)
-        , ""
-        , "pattern Space :: Int"
-        , "pattern Space = " <> show (fromEnum Zs)
-        , ""
-        , "pattern LineSeparator :: Int"
-        , "pattern LineSeparator = " <> show (fromEnum Zl)
-        , ""
-        , "pattern ParagraphSeparator :: Int"
-        , "pattern ParagraphSeparator = " <> show (fromEnum Zp)
-        , ""
-        , "pattern Control :: Int"
-        , "pattern Control = " <> show (fromEnum Cc)
-        , ""
-        , "pattern Format :: Int"
-        , "pattern Format = " <> show (fromEnum Cf)
-        , ""
-        , "pattern Surrogate :: Int"
-        , "pattern Surrogate = " <> show (fromEnum Cs)
-        , ""
-        , "pattern PrivateUse :: Int"
-        , "pattern PrivateUse = " <> show (fromEnum Co)
-        , ""
-        , "pattern NotAssigned :: Int"
-        , "pattern NotAssigned = " <> show (fromEnum Cn)
-        , ""
+        , foldMap mkGeneralCategoryPattern [minBound..maxBound]
+        , mkCharBoundPattern maxIsLetter    "MaxIsLetter"    "isLetter"
+        , mkCharBoundPattern maxIsAlphaNum  "MaxIsAlphaNum"  "isAlphaNum"
+        , mkCharBoundPattern maxIsSpace     "MaxIsSpace"     "isSpace"
+        , mkCharBoundPattern maxIsSeparator "MaxIsSeparator" "isSeparator"
         , "{-# INLINE generalCategoryPlanes0To3 #-}"
         , "generalCategoryPlanes0To3 :: Int -> Int"
         , "generalCategoryPlanes0To3 = lookupIntN bitmap#"
         , "    where"
         , "    !(Ptr bitmap#) = generalCategoryBitmap"
         , ""
-        , genEnumBitmap "generalCategory" Co Cn (reverse acc1) (reverse acc2)
+        , genEnumBitmap
+            "generalCategory"
+            (Co, generalCategoryConstructor Co)
+            (Cn, generalCategoryConstructor Cn)
+            (reverse acc1)
+            (reverse acc2)
         ]
+        where
+        mkGeneralCategoryExport gc = mconcat
+            [", pattern ", generalCategoryConstructor gc, "\n"]
+        mkGeneralCategoryPattern gc = mconcat
+            [ "\n-- | General category ", show gc, "\n"
+            , "pattern ", generalCategoryConstructor gc, " :: Int\n"
+            , "pattern ", generalCategoryConstructor gc
+            , " = "
+            , show (fromEnum gc), "\n"]
+        mkCharBoundPattern c p f = mconcat
+            [ "-- | Maximum codepoint satisfying @", f, "@\n"
+            , "pattern ", p, " :: Int\n"
+            , "pattern ", p, " = 0x", showHexCodepoint c, "\n"]
 
 readDecomp :: String -> (Maybe DecompType, Decomp)
 readDecomp s =
@@ -1830,7 +1804,12 @@ genIdentifierTypeModule moduleName =
         , "    _ -> " <> hackHaskellConstructor def
         , ""
         , "-- | Returns the 'IdentifierType's corresponding to a character."
-        , genEnumBitmap "identifierTypes" def' def' planes0To3 plane14
+        , genEnumBitmap
+            "identifierTypes"
+            (def', show (fromEnum def'))
+            (def', show (fromEnum def'))
+            planes0To3
+            plane14
         ]
         where
         def' = 0
