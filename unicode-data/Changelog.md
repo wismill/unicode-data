@@ -1,5 +1,16 @@
 # Changelog
 
+## (Unreleased)
+
+### Breaking changes
+
+- The constructor of `BlockDefinition` has changed and is not exposed anymore
+  in `Unicode.Char.General.Block`. Instead the pattern synonym `BlockDefinition`
+  is provided with read-only field accessors.
+
+  __Migration:__ import the module `Unicode.Char.General.Block` qualified or
+  explicitly import pattern and field accessors.
+
 ## 0.4.0.1 (December 2022)
 
 - Fix [Unicode blocks handling on big-endian architectures](https://github.com/composewell/unicode-data/issues/97).

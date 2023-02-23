@@ -480,6 +480,7 @@ genBlocksModule moduleName = done <$> Fold.foldl' step initial
 
     done (blocks, defs, ranges) = let ranges' = reverse ranges in unlines
         [ apacheLicense 2022 moduleName
+        , "{-# LANGUAGE DeriveGeneric #-}"
         , "{-# OPTIONS_HADDOCK hide #-}"
         , ""
         , "module " <> moduleName
@@ -488,7 +489,9 @@ genBlocksModule moduleName = done <$> Fold.foldl' step initial
         , ""
         , "import Data.Ix (Ix)"
         , "import Data.Word (Word32)"
+        , "import Foreign.C.String (CString)"
         , "import GHC.Exts"
+        , "import GHC.Generics (Generic)"
         , "import Unicode.Internal.Bits (lookupWord32#)"
         , ""
         , "-- | Unicode [block](https://www.unicode.org/glossary/#block)."
@@ -505,8 +508,8 @@ genBlocksModule moduleName = done <$> Fold.foldl' step initial
         , "-- @since 0.3.1"
         , "data BlockDefinition = BlockDefinition"
         , "    { blockRange :: !(Int, Int) -- ^ Range"
-        , "    , blockName :: !String -- ^ Name"
-        , "    } deriving (Eq, Ord, Show)"
+        , "    , blockName  :: !CString    -- ^ Name"
+        , "    } deriving (Generic, Eq, Ord, Show)"
         , ""
         , "-- | Block definition"
         , "--"
@@ -585,9 +588,9 @@ genBlocksModule moduleName = done <$> Fold.foldl' step initial
         , showPaddedHex l
         , ", 0x"
         , showPaddedHex u
-        , ") "
-        , show blockName
-        , "\n"
+        , ") (Ptr \""
+        , blockName -- NOTE: name is ASCII
+        , "\\0\"#)\n"
         ]
 
     -- [NOTE] Encoding: a range is encoded as two LE Word32:
