@@ -1723,6 +1723,7 @@ genNumericValuesModule moduleName =
         , "(numericValue)"
         , "where"
         , ""
+        , "{-# NOINLINE numericValue #-}"
         , "import Data.Ratio ((%))"
         , ""
         , "numericValue :: Char -> Maybe Rational"

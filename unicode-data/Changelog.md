@@ -10,6 +10,12 @@
 
   __Migration:__ import the module `Unicode.Char.General.Block` qualified or
   explicitly import pattern and field accessors.
+- The return type of `integerValue` has changed from `Maybe Int` to
+  `(Integral a) => Maybe a`, in order to deal with possible overflow.
+
+  __Migration:__ replace `integerValue` with `integerValue @Int` if the compiler
+  cannot infer the return type. Prefer `@Int64` or `@Integer` if you do not
+  check integer overflow.
 
 ## 0.4.0.1 (December 2022)
 
