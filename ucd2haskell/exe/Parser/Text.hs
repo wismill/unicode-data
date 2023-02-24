@@ -1563,7 +1563,7 @@ genNamesModule moduleName =
         , "where"
         , ""
         , "import Data.Int (Int32)"
-        , "import Foreign.C (CChar, CString)"
+        , "import Foreign.C (CChar)"
         , "import GHC.Exts"
         , "import Unicode.Internal.Bits.Names (lookupInt32#)"
         , ""
@@ -1571,8 +1571,8 @@ genNamesModule moduleName =
         , "--"
         , "-- @since 0.1.0"
         , "{-# INLINE name #-}"
-        , "name :: Char -> Maybe CString"
-        , "name (C# c#) = getName 0# " <> shows (length names - 1) "#"
+        , "name :: Char# -> Addr#"
+        , "name c# = getName 0# " <> shows (length names - 1) "#"
         , "    where"
         , "    -- [NOTE] Encoding"
         , "    -- • The names are ASCII. Each name is encoded as a NUL-terminated CString."
@@ -1584,7 +1584,7 @@ genNamesModule moduleName =
         , "    cp# = ord# c#"
         , "    -- Binary search"
         , "    getName l# u# = if isTrue# (l# ># u#)"
-        , "        then Nothing"
+        , "        then \"\\0\"#"
         , "        else"
         , "            let k# = l# +# uncheckedIShiftRL# (u# -# l#) 1#"
         , "                j# = k# `uncheckedIShiftL#` 1#"
@@ -1593,7 +1593,7 @@ genNamesModule moduleName =
         , "                then getName (k# +# 1#) u#"
         , "                else if isTrue# (cp'# ==# cp#)"
         , "                    then let offset# = getRawCodePoint# (j# +# 1#)"
-        , "                         in Just (Ptr (names# `plusAddr#` offset#))"
+        , "                         in names# `plusAddr#` offset#"
         , "                    else getName l# (k# -# 1#)"
         , ""
         , "    getRawCodePoint# = lookupInt32# offsets#"
@@ -1622,7 +1622,7 @@ genAliasesModule
     => String
     -> Fold m CharAliases String
 genAliasesModule moduleName =
-    done <$> Fold.foldr (\a -> (:) (mkCharAliases a)) mempty
+    done <$> Fold.foldr ((:) . mkCharAliases) mempty
 
     where
 
@@ -1630,25 +1630,71 @@ genAliasesModule moduleName =
     mkCharAliases (CharAliases char aliases) = mconcat
         [ "  '\\x"
         , showHexCodepoint char
-        , "' -> "
-        , show . Map.toList
-               . Map.fromListWith (flip (<>))
-               $ fmap ((:[])) <$> aliases
-        , "\n"
+        , "'# -> \""
+        , mkCharAliasesLiteral char aliases
+        , "\"#\n"
         ]
+
+    mkCharAliasesLiteral :: Char -> Aliases -> String
+    mkCharAliasesLiteral char aliasesList =
+        enumMapToAddrLiteral 0 0xfff (reverse index) (mconcat (reverse aliases))
+        where
+        (index, aliases, _) = Map.foldlWithKey'
+            (addAliasType char)
+            (mempty, mempty, Map.size aliasesMap)
+            aliasesMap
+        -- Group aliases by type
+        aliasesMap = foldr
+            (\(ty, a) -> Map.adjust (a:) ty)
+            (Map.fromSet (const []) (Set.fromList [minBound..maxBound]))
+            aliasesList
+
+    -- [FIXME] [(Word8:AliasType,Word8:index of first alias)] [CString]
+    addAliasType
+        :: Char
+        -> ([Word8], [String], Int) -- (index, aliases, last alias index)
+        -> AliasType
+        -> [Alias]
+        -> ([Word8], [String], Int)
+    addAliasType char (index, aliasesAcc, lastAliasIndex) _ty = \case
+        [] ->
+            ( 0 : index
+            , aliasesAcc
+            , lastAliasIndex )
+        aliases -> -- traceShow (char, ty, fromIntegral lastAliasIndex :: Word8)
+            ( fromIntegral lastAliasIndex : index
+            , encodedAliases
+            , lastAliasIndex' )
+            where
+            (encodedAliases, lastAliasIndex') =
+                addEncodedAliases (aliasesAcc, lastAliasIndex) aliases
+            addEncodedAliases acc@(as, offset) = \case
+                Alias alias : rest -> if offset' < 0xff
+                    then addEncodedAliases
+                        -- next offset : null-terminated string
+                        ( mconcat ["\\", show nextAliasOffset, alias, "\\0"]:as
+                        , offset' )
+                        rest
+                    else error . mconcat $
+                        [ "Cannot encode alias “", alias, "” offset for char : "
+                        , show char
+                        , " . Offset: ", show offset', " >= 0xff" ]
+                    where
+                    -- offset + length + null
+                    offset' = offset + length alias + 2
+                    nextAliasOffset = if null rest then 0 else offset'
+                [] -> acc
 
     done names = unlines
         [ apacheLicense 2022 moduleName
         , "{-# OPTIONS_HADDOCK hide #-}"
         , ""
         , "module " <> moduleName
-        , "(NameAliasType(..), nameAliases, nameAliasesByType, nameAliasesWithTypes)"
+        , "(NameAliasType(..), maxNameAliasType, nameAliases)"
         , "where"
         , ""
         , "import Data.Ix (Ix)"
-        , "import Data.Maybe (fromMaybe)"
-        , "import Foreign.C.String (CString)"
-        , "import GHC.Exts (Ptr(..))"
+        , "import GHC.Exts (Addr#, Char#)"
         , ""
         , "-- | Type of name alias. See Unicode Standard 15.0.0, section 4.8."
         , "--"
@@ -1669,22 +1715,9 @@ genAliasesModule moduleName =
         , "    --   format characters, spaces, and variation selectors."
         , "    deriving (Enum, Bounded, Eq, Ord, Ix, Show)"
         , ""
-        , "-- | All name aliases of a character."
-        , "-- The names are listed in the original order of the UCD."
-        , "--"
-        , "-- See 'nameAliasesWithTypes' for the detailed list by alias type."
-        , "--"
-        , "-- @since 0.1.0"
-        , "{-# INLINE nameAliases #-}"
-        , "nameAliases :: Char -> [CString]"
-        , "nameAliases = mconcat . fmap snd . nameAliasesWithTypes"
-        , ""
-        , "-- | Name aliases of a character for a specific name alias type."
-        , "--"
-        , "-- @since 0.1.0"
-        , "{-# INLINE nameAliasesByType #-}"
-        , "nameAliasesByType :: NameAliasType -> Char -> [CString]"
-        , "nameAliasesByType t = fromMaybe mempty . lookup t . nameAliasesWithTypes"
+        , "-- | >>> maxNameAliasType == fromEnum (maxBound :: NameAliasType)"
+        , "maxNameAliasType :: Int"
+        , "maxNameAliasType = 4"
         , ""
         , "-- | Detailed character names aliases."
         , "-- The names are listed in the original order of the UCD."
@@ -1692,10 +1725,10 @@ genAliasesModule moduleName =
         , "-- See 'nameAliases' if the alias type is not required."
         , "--"
         , "-- @since 0.1.0"
-        , "nameAliasesWithTypes :: Char -> [(NameAliasType, [CString])]"
-        , "nameAliasesWithTypes = \\case"
+        , "nameAliases :: Char# -> Addr#"
+        , "nameAliases = \\case"
         , mconcat names
-        , "  _ -> mempty"
+        , "  _          -> \"\\xff\"#"
         ]
 
 genNumericValuesModule
@@ -2469,7 +2502,7 @@ data AliasType
     | Alternate
     | Figment
     | Abbreviation
-    deriving (Eq, Ord, Read, Show)
+    deriving (Enum, Bounded, Eq, Ord, Read, Show)
 
 newtype Alias = Alias String
 instance Show Alias where
