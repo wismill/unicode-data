@@ -5,8 +5,8 @@ import Data.Ix (Ix(..))
 import Test.Tasty.Bench (Benchmark, bgroup, bcompare, bench, nf, defaultMain)
 
 import qualified Unicode.Char.General.Names as Names
-import qualified Unicode.Internal.Char.UnicodeData.DerivedName as DerivedName
-import qualified Unicode.Internal.Char.UnicodeData.NameAliases as NameAliases
+-- import qualified Unicode.Internal.Char.UnicodeData.DerivedName as DerivedName
+-- import qualified Unicode.Internal.Char.UnicodeData.NameAliases as NameAliases
 
 -- | A unit benchmark
 data Bench = forall a. (NFData a) => Bench
@@ -19,8 +19,9 @@ main = defaultMain
     [ bgroup "Unicode.Char.General.Names"
         -- Character classification
         [ bgroup' "name"
-            [ Bench "CString" DerivedName.name
-            , Bench "String"  Names.name
+            -- [ Bench "CString" DerivedName.name
+            -- , Bench "String"  Names.name
+            [ Bench "String"  Names.name
             ]
         , bgroup' "correctedName"
             [ Bench "String"  Names.correctedName
@@ -29,14 +30,19 @@ main = defaultMain
             [ Bench "String"  Names.name
             ]
         , bgroup' "nameAliasesByType"
-            [ Bench "CString"
-                (\c -> (`NameAliases.nameAliasesByType` c) <$> [minBound..maxBound])
-            , Bench "String"
+            -- [ Bench "CString"
+            --     (\c -> (`NameAliases.nameAliasesByType` c) <$> [minBound..maxBound])
+            -- , Bench "String"
+            [ Bench "String"
                 (\c -> (`Names.nameAliasesByType` c) <$> [minBound..maxBound])
             ]
         , bgroup' "nameAliasesWithTypes"
-            [ Bench "CString" (show . NameAliases.nameAliasesWithTypes)
-            , Bench "String"  (show . Names.nameAliasesWithTypes)
+            -- [ Bench "CString" (show . NameAliases.nameAliasesWithTypes)
+            -- , Bench "String"  (show . Names.nameAliasesWithTypes)
+            [ Bench "String"  (show . Names.nameAliasesWithTypes)
+            ]
+        , bgroup' "nameAliases"
+            [ Bench "String"  Names.nameAliases
             ]
         ]
     ]

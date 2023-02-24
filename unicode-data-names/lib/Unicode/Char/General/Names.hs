@@ -17,7 +17,7 @@ module Unicode.Char.General.Names
     , correctedName
       -- * Name Aliases
     , NameAliases.NameAliasType(..)
-    -- , nameAliases
+    , nameAliases
     , nameAliasesByType
     , nameAliasesWithTypes
     ) where
@@ -27,7 +27,7 @@ import GHC.Exts
     ( Addr#, Char(..), Int#, Int(..)
     , indexCharOffAddr#, plusAddr#, dataToTag#, ord#, (+#), (<#), isTrue# )
 
-import Unicode.Internal.Bits.Names (unpackCString#)
+import Unicode.Internal.Bits.Names (unpackCString#, SPEC (SPEC))
 import qualified Unicode.Internal.Char.UnicodeData.DerivedName as DerivedName
 import qualified Unicode.Internal.Char.UnicodeData.NameAliases as NameAliases
 
@@ -38,8 +38,10 @@ import qualified Unicode.Internal.Char.UnicodeData.NameAliases as NameAliases
 name :: Char -> Maybe String
 name (C# c#) = case indexCharOffAddr# name# 0# of
     '\0'# -> Nothing
-    _     -> Just (unpackCString# name#)
-    where name# = DerivedName.name c#
+    c1#   -> let !n = unpackCString# (name# `plusAddr#` 1#)
+             in Just (C# c1# : n)
+    where
+    !name# = DerivedName.name c#
 
 -- | Returns /corrected/ name of a character (see 'NameAliases.Correction'),
 -- if defined, otherwise returns its original 'name' if defined.
@@ -50,11 +52,13 @@ correctedName :: Char -> Maybe String
 correctedName c@(C# c#) = corrected <|> name c
     where
     -- Assumption: fromEnum NameAliases.Correction == 0
-    corrected = case indexCharOffAddr# addr# 0# of
+    !corrected = case indexCharOffAddr# addr# 0# of
         '\xff'# -> Nothing -- no aliases
         '\x00'# -> Nothing -- no correction
-        i#      -> Just (unpackCString# (addr# `plusAddr#` (ord# i# +# 1#)))
-    addr# = NameAliases.nameAliases c#
+        i#      ->
+            let !n = unpackCString# (addr# `plusAddr#` (ord# i# +# 1#))
+            in Just n
+    !addr# = NameAliases.nameAliases c#
 
 -- | Returns a character’s 'name' if defined,
 -- otherwise returns its first name alias if defined.
@@ -63,9 +67,10 @@ correctedName c@(C# c#) = corrected <|> name c
 nameOrAlias :: Char -> Maybe String
 nameOrAlias c@(C# c#) = name c <|> case indexCharOffAddr# addr# 0# of
     '\xff'# -> Nothing -- no aliases
-    _       -> Just (unpackCString# (go 0#))
+    '\x00'# -> let !n = unpackCString# (go 1#) in Just n
+    _       -> let !n = unpackCString# (go 0#) in Just n
     where
-    addr# = NameAliases.nameAliases c#
+    !addr# = NameAliases.nameAliases c#
     !(I# maxNameAliasType#) = NameAliases.maxNameAliasType
     go t# = case indexCharOffAddr# (addr# `plusAddr#` t#) 0# of
         '\0'# -> if isTrue# (t# <# maxNameAliasType#)
@@ -79,16 +84,19 @@ nameOrAlias c@(C# c#) = name c <|> case indexCharOffAddr# addr# 0# of
 -- See 'nameAliasesWithTypes' for the detailed list by alias type.
 --
 -- @since 0.1.0
--- {-# INLINE nameAliases #-}
--- nameAliases :: Char -> [String]
--- nameAliases = fmap unpack . NameAliases.nameAliases
+{-# INLINE nameAliases #-}
+nameAliases :: Char -> [String]
+nameAliases (C# c#) = case indexCharOffAddr# addr# 0# of
+    '\xff'# -> [] -- no aliases
+    _       -> foldMap (nameAliasesByType# addr#) [minBound..maxBound]
+    where
+    addr# = NameAliases.nameAliases c#
 
 -- | Name aliases of a character for a specific name alias type.
 --
 -- @since 0.1.0
 {-# INLINE nameAliasesByType #-}
 nameAliasesByType :: NameAliases.NameAliasType -> Char -> [String]
--- nameAliasesByType t = fmap unpack . NameAliases.nameAliasesByType t
 nameAliasesByType t (C# c#) = case indexCharOffAddr# addr# 0# of
     '\xff'# -> [] -- no aliases
     _       -> nameAliasesByType# addr# t
@@ -105,6 +113,7 @@ nameAliasesByType t (C# c#) = case indexCharOffAddr# addr# 0# of
 nameAliasesWithTypes :: Char -> [(NameAliases.NameAliasType, [String])]
 nameAliasesWithTypes (C# c#) = case indexCharOffAddr# addr# 0# of
     '\xff'# -> [] -- no aliases
+    '\x00'# -> foldr mk mempty [succ minBound..maxBound]
     _       -> foldr mk mempty [minBound..maxBound]
     where
     addr# = NameAliases.nameAliases c#
@@ -121,12 +130,12 @@ nameAliasesByType# addr# t = case indexCharOffAddr# (addr# `plusAddr#` t#) 0# of
 
 {-# INLINE unpackCStrings #-}
 unpackCStrings :: Addr# -> Int# -> [String]
-unpackCStrings addr# = go
+unpackCStrings addr# = go SPEC
     where
-    go i#
-        = unpackCString# (addr# `plusAddr#` (i# +# 1#))
-        : case indexCharOffAddr# (addr# `plusAddr#` i#) 0# of
+    go !_ i# =
+        let !s = unpackCString# (addr# `plusAddr#` (i# +# 1#))
+        in s : case indexCharOffAddr# (addr# `plusAddr#` i#) 0# of
             '\0'# -> []
-            j#    -> go (ord# j#)
+            j#    -> go SPEC (ord# j#)
 
 
