@@ -1,4 +1,6 @@
 {-# LANGUAGE CPP #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use fewer imports" #-}
 
 -- |
 -- Module      : Unicode.Internal.Bits
@@ -16,6 +18,7 @@ module Unicode.Internal.Bits
       lookupBit64
     , lookupIntN
     , lookupWord32#
+    , lookupInt32#
       -- * CString
     , unpackCString#
     ) where
@@ -35,11 +38,17 @@ import GHC.Exts (unpackCString#)
 import GHC.CString (unpackCString#)
 #endif
 #if MIN_VERSION_base(4,16,0)
-import GHC.Exts (word8ToWord#, word32ToWord#)
+import GHC.Exts (word8ToWord#, word32ToWord#, int32ToInt#)
 #endif
 #ifdef WORDS_BIGENDIAN
 import GHC.Exts (byteSwap#, narrow32Word#, byteSwap32#)
+#else
+import GHC.Exts (indexInt32OffAddr#)
 #endif
+
+--------------------------------------------------------------------------------
+-- Bitmap lookup
+--------------------------------------------------------------------------------
 
 -- | @lookup64 addr index@ looks up the bit stored at bit index @index@ using a
 -- bitmap starting at the address @addr@. Looks up the 64-bit word containing
@@ -111,3 +120,30 @@ lookupWord32#
 #else
     = indexWord32OffAddr#
 #endif
+
+{-| @lookupInt32# addr index@ looks up for the @index@-th 32-bits int in
+the bitmap starting at @addr@, then convert it to an 'Int#'.
+
+The caller must make sure that:
+
+* @ceiling (addr + (n * 32))@ is legally accessible 'GHC.Exts.Int32#'.
+
+@since 0.4.1
+-}
+lookupInt32#
+  :: Addr# -- ^ Bitmap address
+  -> Int#  -- ^ Int index
+  -> Int#
+lookupInt32#
+#ifdef WORDS_BIGENDIAN
+#if MIN_VERSION_base(4,16,0)
+    addr# k# = word2int# (narrow32Word# (byteSwap32# (word32ToWord# (indexWord32OffAddr# addr# k#))))
+#else
+    addr# k# = word2int# (narrow32Word# (byteSwap32# (indexWord32OffAddr# addr# k#)))
+#endif
+#elif MIN_VERSION_base(4,16,0)
+    addr# k# = int32ToInt# (indexInt32OffAddr# addr# k#)
+#else
+    = indexInt32OffAddr#
+#endif
+

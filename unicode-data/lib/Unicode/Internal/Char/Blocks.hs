@@ -6,18 +6,16 @@
 -- Maintainer  : streamly@composewell.com
 -- Stability   : experimental
 
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE LambdaCase #-}
 {-# OPTIONS_HADDOCK hide #-}
 
 module Unicode.Internal.Char.Blocks
-(Block(..), BlockDefinition(..), block, blockDefinition)
+(Block(..), block, blockDefinition)
 where
 
 import Data.Ix (Ix)
 import Data.Word (Word32)
-import Foreign.C.String (CString)
 import GHC.Exts
-import GHC.Generics (Generic)
 import Unicode.Internal.Bits (lookupWord32#)
 
 -- | Unicode [block](https://www.unicode.org/glossary/#block).
@@ -355,352 +353,353 @@ data Block
     | SupplementaryPrivateUseAreaB -- ^ @U+100000..U+10FFFF@: Supplementary Private Use Area-B.
     deriving (Enum, Bounded, Eq, Ord, Ix, Show)
 
--- | Block definition: range and name.
---
--- @since 0.3.1
-data BlockDefinition = BlockDefinition
-    { blockRange :: !(Int, Int) -- ^ Range
-    , blockName  :: !CString    -- ^ Name
-    } deriving (Generic, Eq, Ord, Show)
-
 -- | Block definition
 --
--- @since 0.3.1
-blockDefinition :: Block -> BlockDefinition
-blockDefinition b = case b of
-    BasicLatin -> BlockDefinition (0x0000, 0x007f) (Ptr "Basic Latin\0"#)
-    Latin1Supplement -> BlockDefinition (0x0080, 0x00ff) (Ptr "Latin-1 Supplement\0"#)
-    LatinExtendedA -> BlockDefinition (0x0100, 0x017f) (Ptr "Latin Extended-A\0"#)
-    LatinExtendedB -> BlockDefinition (0x0180, 0x024f) (Ptr "Latin Extended-B\0"#)
-    IPAExtensions -> BlockDefinition (0x0250, 0x02af) (Ptr "IPA Extensions\0"#)
-    SpacingModifierLetters -> BlockDefinition (0x02b0, 0x02ff) (Ptr "Spacing Modifier Letters\0"#)
-    CombiningDiacriticalMarks -> BlockDefinition (0x0300, 0x036f) (Ptr "Combining Diacritical Marks\0"#)
-    GreekAndCoptic -> BlockDefinition (0x0370, 0x03ff) (Ptr "Greek and Coptic\0"#)
-    Cyrillic -> BlockDefinition (0x0400, 0x04ff) (Ptr "Cyrillic\0"#)
-    CyrillicSupplement -> BlockDefinition (0x0500, 0x052f) (Ptr "Cyrillic Supplement\0"#)
-    Armenian -> BlockDefinition (0x0530, 0x058f) (Ptr "Armenian\0"#)
-    Hebrew -> BlockDefinition (0x0590, 0x05ff) (Ptr "Hebrew\0"#)
-    Arabic -> BlockDefinition (0x0600, 0x06ff) (Ptr "Arabic\0"#)
-    Syriac -> BlockDefinition (0x0700, 0x074f) (Ptr "Syriac\0"#)
-    ArabicSupplement -> BlockDefinition (0x0750, 0x077f) (Ptr "Arabic Supplement\0"#)
-    Thaana -> BlockDefinition (0x0780, 0x07bf) (Ptr "Thaana\0"#)
-    NKo -> BlockDefinition (0x07c0, 0x07ff) (Ptr "NKo\0"#)
-    Samaritan -> BlockDefinition (0x0800, 0x083f) (Ptr "Samaritan\0"#)
-    Mandaic -> BlockDefinition (0x0840, 0x085f) (Ptr "Mandaic\0"#)
-    SyriacSupplement -> BlockDefinition (0x0860, 0x086f) (Ptr "Syriac Supplement\0"#)
-    ArabicExtendedB -> BlockDefinition (0x0870, 0x089f) (Ptr "Arabic Extended-B\0"#)
-    ArabicExtendedA -> BlockDefinition (0x08a0, 0x08ff) (Ptr "Arabic Extended-A\0"#)
-    Devanagari -> BlockDefinition (0x0900, 0x097f) (Ptr "Devanagari\0"#)
-    Bengali -> BlockDefinition (0x0980, 0x09ff) (Ptr "Bengali\0"#)
-    Gurmukhi -> BlockDefinition (0x0a00, 0x0a7f) (Ptr "Gurmukhi\0"#)
-    Gujarati -> BlockDefinition (0x0a80, 0x0aff) (Ptr "Gujarati\0"#)
-    Oriya -> BlockDefinition (0x0b00, 0x0b7f) (Ptr "Oriya\0"#)
-    Tamil -> BlockDefinition (0x0b80, 0x0bff) (Ptr "Tamil\0"#)
-    Telugu -> BlockDefinition (0x0c00, 0x0c7f) (Ptr "Telugu\0"#)
-    Kannada -> BlockDefinition (0x0c80, 0x0cff) (Ptr "Kannada\0"#)
-    Malayalam -> BlockDefinition (0x0d00, 0x0d7f) (Ptr "Malayalam\0"#)
-    Sinhala -> BlockDefinition (0x0d80, 0x0dff) (Ptr "Sinhala\0"#)
-    Thai -> BlockDefinition (0x0e00, 0x0e7f) (Ptr "Thai\0"#)
-    Lao -> BlockDefinition (0x0e80, 0x0eff) (Ptr "Lao\0"#)
-    Tibetan -> BlockDefinition (0x0f00, 0x0fff) (Ptr "Tibetan\0"#)
-    Myanmar -> BlockDefinition (0x1000, 0x109f) (Ptr "Myanmar\0"#)
-    Georgian -> BlockDefinition (0x10a0, 0x10ff) (Ptr "Georgian\0"#)
-    HangulJamo -> BlockDefinition (0x1100, 0x11ff) (Ptr "Hangul Jamo\0"#)
-    Ethiopic -> BlockDefinition (0x1200, 0x137f) (Ptr "Ethiopic\0"#)
-    EthiopicSupplement -> BlockDefinition (0x1380, 0x139f) (Ptr "Ethiopic Supplement\0"#)
-    Cherokee -> BlockDefinition (0x13a0, 0x13ff) (Ptr "Cherokee\0"#)
-    UnifiedCanadianAboriginalSyllabics -> BlockDefinition (0x1400, 0x167f) (Ptr "Unified Canadian Aboriginal Syllabics\0"#)
-    Ogham -> BlockDefinition (0x1680, 0x169f) (Ptr "Ogham\0"#)
-    Runic -> BlockDefinition (0x16a0, 0x16ff) (Ptr "Runic\0"#)
-    Tagalog -> BlockDefinition (0x1700, 0x171f) (Ptr "Tagalog\0"#)
-    Hanunoo -> BlockDefinition (0x1720, 0x173f) (Ptr "Hanunoo\0"#)
-    Buhid -> BlockDefinition (0x1740, 0x175f) (Ptr "Buhid\0"#)
-    Tagbanwa -> BlockDefinition (0x1760, 0x177f) (Ptr "Tagbanwa\0"#)
-    Khmer -> BlockDefinition (0x1780, 0x17ff) (Ptr "Khmer\0"#)
-    Mongolian -> BlockDefinition (0x1800, 0x18af) (Ptr "Mongolian\0"#)
-    UnifiedCanadianAboriginalSyllabicsExtended -> BlockDefinition (0x18b0, 0x18ff) (Ptr "Unified Canadian Aboriginal Syllabics Extended\0"#)
-    Limbu -> BlockDefinition (0x1900, 0x194f) (Ptr "Limbu\0"#)
-    TaiLe -> BlockDefinition (0x1950, 0x197f) (Ptr "Tai Le\0"#)
-    NewTaiLue -> BlockDefinition (0x1980, 0x19df) (Ptr "New Tai Lue\0"#)
-    KhmerSymbols -> BlockDefinition (0x19e0, 0x19ff) (Ptr "Khmer Symbols\0"#)
-    Buginese -> BlockDefinition (0x1a00, 0x1a1f) (Ptr "Buginese\0"#)
-    TaiTham -> BlockDefinition (0x1a20, 0x1aaf) (Ptr "Tai Tham\0"#)
-    CombiningDiacriticalMarksExtended -> BlockDefinition (0x1ab0, 0x1aff) (Ptr "Combining Diacritical Marks Extended\0"#)
-    Balinese -> BlockDefinition (0x1b00, 0x1b7f) (Ptr "Balinese\0"#)
-    Sundanese -> BlockDefinition (0x1b80, 0x1bbf) (Ptr "Sundanese\0"#)
-    Batak -> BlockDefinition (0x1bc0, 0x1bff) (Ptr "Batak\0"#)
-    Lepcha -> BlockDefinition (0x1c00, 0x1c4f) (Ptr "Lepcha\0"#)
-    OlChiki -> BlockDefinition (0x1c50, 0x1c7f) (Ptr "Ol Chiki\0"#)
-    CyrillicExtendedC -> BlockDefinition (0x1c80, 0x1c8f) (Ptr "Cyrillic Extended-C\0"#)
-    GeorgianExtended -> BlockDefinition (0x1c90, 0x1cbf) (Ptr "Georgian Extended\0"#)
-    SundaneseSupplement -> BlockDefinition (0x1cc0, 0x1ccf) (Ptr "Sundanese Supplement\0"#)
-    VedicExtensions -> BlockDefinition (0x1cd0, 0x1cff) (Ptr "Vedic Extensions\0"#)
-    PhoneticExtensions -> BlockDefinition (0x1d00, 0x1d7f) (Ptr "Phonetic Extensions\0"#)
-    PhoneticExtensionsSupplement -> BlockDefinition (0x1d80, 0x1dbf) (Ptr "Phonetic Extensions Supplement\0"#)
-    CombiningDiacriticalMarksSupplement -> BlockDefinition (0x1dc0, 0x1dff) (Ptr "Combining Diacritical Marks Supplement\0"#)
-    LatinExtendedAdditional -> BlockDefinition (0x1e00, 0x1eff) (Ptr "Latin Extended Additional\0"#)
-    GreekExtended -> BlockDefinition (0x1f00, 0x1fff) (Ptr "Greek Extended\0"#)
-    GeneralPunctuation -> BlockDefinition (0x2000, 0x206f) (Ptr "General Punctuation\0"#)
-    SuperscriptsAndSubscripts -> BlockDefinition (0x2070, 0x209f) (Ptr "Superscripts and Subscripts\0"#)
-    CurrencySymbols -> BlockDefinition (0x20a0, 0x20cf) (Ptr "Currency Symbols\0"#)
-    CombiningDiacriticalMarksForSymbols -> BlockDefinition (0x20d0, 0x20ff) (Ptr "Combining Diacritical Marks for Symbols\0"#)
-    LetterlikeSymbols -> BlockDefinition (0x2100, 0x214f) (Ptr "Letterlike Symbols\0"#)
-    NumberForms -> BlockDefinition (0x2150, 0x218f) (Ptr "Number Forms\0"#)
-    Arrows -> BlockDefinition (0x2190, 0x21ff) (Ptr "Arrows\0"#)
-    MathematicalOperators -> BlockDefinition (0x2200, 0x22ff) (Ptr "Mathematical Operators\0"#)
-    MiscellaneousTechnical -> BlockDefinition (0x2300, 0x23ff) (Ptr "Miscellaneous Technical\0"#)
-    ControlPictures -> BlockDefinition (0x2400, 0x243f) (Ptr "Control Pictures\0"#)
-    OpticalCharacterRecognition -> BlockDefinition (0x2440, 0x245f) (Ptr "Optical Character Recognition\0"#)
-    EnclosedAlphanumerics -> BlockDefinition (0x2460, 0x24ff) (Ptr "Enclosed Alphanumerics\0"#)
-    BoxDrawing -> BlockDefinition (0x2500, 0x257f) (Ptr "Box Drawing\0"#)
-    BlockElements -> BlockDefinition (0x2580, 0x259f) (Ptr "Block Elements\0"#)
-    GeometricShapes -> BlockDefinition (0x25a0, 0x25ff) (Ptr "Geometric Shapes\0"#)
-    MiscellaneousSymbols -> BlockDefinition (0x2600, 0x26ff) (Ptr "Miscellaneous Symbols\0"#)
-    Dingbats -> BlockDefinition (0x2700, 0x27bf) (Ptr "Dingbats\0"#)
-    MiscellaneousMathematicalSymbolsA -> BlockDefinition (0x27c0, 0x27ef) (Ptr "Miscellaneous Mathematical Symbols-A\0"#)
-    SupplementalArrowsA -> BlockDefinition (0x27f0, 0x27ff) (Ptr "Supplemental Arrows-A\0"#)
-    BraillePatterns -> BlockDefinition (0x2800, 0x28ff) (Ptr "Braille Patterns\0"#)
-    SupplementalArrowsB -> BlockDefinition (0x2900, 0x297f) (Ptr "Supplemental Arrows-B\0"#)
-    MiscellaneousMathematicalSymbolsB -> BlockDefinition (0x2980, 0x29ff) (Ptr "Miscellaneous Mathematical Symbols-B\0"#)
-    SupplementalMathematicalOperators -> BlockDefinition (0x2a00, 0x2aff) (Ptr "Supplemental Mathematical Operators\0"#)
-    MiscellaneousSymbolsAndArrows -> BlockDefinition (0x2b00, 0x2bff) (Ptr "Miscellaneous Symbols and Arrows\0"#)
-    Glagolitic -> BlockDefinition (0x2c00, 0x2c5f) (Ptr "Glagolitic\0"#)
-    LatinExtendedC -> BlockDefinition (0x2c60, 0x2c7f) (Ptr "Latin Extended-C\0"#)
-    Coptic -> BlockDefinition (0x2c80, 0x2cff) (Ptr "Coptic\0"#)
-    GeorgianSupplement -> BlockDefinition (0x2d00, 0x2d2f) (Ptr "Georgian Supplement\0"#)
-    Tifinagh -> BlockDefinition (0x2d30, 0x2d7f) (Ptr "Tifinagh\0"#)
-    EthiopicExtended -> BlockDefinition (0x2d80, 0x2ddf) (Ptr "Ethiopic Extended\0"#)
-    CyrillicExtendedA -> BlockDefinition (0x2de0, 0x2dff) (Ptr "Cyrillic Extended-A\0"#)
-    SupplementalPunctuation -> BlockDefinition (0x2e00, 0x2e7f) (Ptr "Supplemental Punctuation\0"#)
-    CJKRadicalsSupplement -> BlockDefinition (0x2e80, 0x2eff) (Ptr "CJK Radicals Supplement\0"#)
-    KangxiRadicals -> BlockDefinition (0x2f00, 0x2fdf) (Ptr "Kangxi Radicals\0"#)
-    IdeographicDescriptionCharacters -> BlockDefinition (0x2ff0, 0x2fff) (Ptr "Ideographic Description Characters\0"#)
-    CJKSymbolsAndPunctuation -> BlockDefinition (0x3000, 0x303f) (Ptr "CJK Symbols and Punctuation\0"#)
-    Hiragana -> BlockDefinition (0x3040, 0x309f) (Ptr "Hiragana\0"#)
-    Katakana -> BlockDefinition (0x30a0, 0x30ff) (Ptr "Katakana\0"#)
-    Bopomofo -> BlockDefinition (0x3100, 0x312f) (Ptr "Bopomofo\0"#)
-    HangulCompatibilityJamo -> BlockDefinition (0x3130, 0x318f) (Ptr "Hangul Compatibility Jamo\0"#)
-    Kanbun -> BlockDefinition (0x3190, 0x319f) (Ptr "Kanbun\0"#)
-    BopomofoExtended -> BlockDefinition (0x31a0, 0x31bf) (Ptr "Bopomofo Extended\0"#)
-    CJKStrokes -> BlockDefinition (0x31c0, 0x31ef) (Ptr "CJK Strokes\0"#)
-    KatakanaPhoneticExtensions -> BlockDefinition (0x31f0, 0x31ff) (Ptr "Katakana Phonetic Extensions\0"#)
-    EnclosedCJKLettersAndMonths -> BlockDefinition (0x3200, 0x32ff) (Ptr "Enclosed CJK Letters and Months\0"#)
-    CJKCompatibility -> BlockDefinition (0x3300, 0x33ff) (Ptr "CJK Compatibility\0"#)
-    CJKUnifiedIdeographsExtensionA -> BlockDefinition (0x3400, 0x4dbf) (Ptr "CJK Unified Ideographs Extension A\0"#)
-    YijingHexagramSymbols -> BlockDefinition (0x4dc0, 0x4dff) (Ptr "Yijing Hexagram Symbols\0"#)
-    CJKUnifiedIdeographs -> BlockDefinition (0x4e00, 0x9fff) (Ptr "CJK Unified Ideographs\0"#)
-    YiSyllables -> BlockDefinition (0xa000, 0xa48f) (Ptr "Yi Syllables\0"#)
-    YiRadicals -> BlockDefinition (0xa490, 0xa4cf) (Ptr "Yi Radicals\0"#)
-    Lisu -> BlockDefinition (0xa4d0, 0xa4ff) (Ptr "Lisu\0"#)
-    Vai -> BlockDefinition (0xa500, 0xa63f) (Ptr "Vai\0"#)
-    CyrillicExtendedB -> BlockDefinition (0xa640, 0xa69f) (Ptr "Cyrillic Extended-B\0"#)
-    Bamum -> BlockDefinition (0xa6a0, 0xa6ff) (Ptr "Bamum\0"#)
-    ModifierToneLetters -> BlockDefinition (0xa700, 0xa71f) (Ptr "Modifier Tone Letters\0"#)
-    LatinExtendedD -> BlockDefinition (0xa720, 0xa7ff) (Ptr "Latin Extended-D\0"#)
-    SylotiNagri -> BlockDefinition (0xa800, 0xa82f) (Ptr "Syloti Nagri\0"#)
-    CommonIndicNumberForms -> BlockDefinition (0xa830, 0xa83f) (Ptr "Common Indic Number Forms\0"#)
-    PhagsPa -> BlockDefinition (0xa840, 0xa87f) (Ptr "Phags-pa\0"#)
-    Saurashtra -> BlockDefinition (0xa880, 0xa8df) (Ptr "Saurashtra\0"#)
-    DevanagariExtended -> BlockDefinition (0xa8e0, 0xa8ff) (Ptr "Devanagari Extended\0"#)
-    KayahLi -> BlockDefinition (0xa900, 0xa92f) (Ptr "Kayah Li\0"#)
-    Rejang -> BlockDefinition (0xa930, 0xa95f) (Ptr "Rejang\0"#)
-    HangulJamoExtendedA -> BlockDefinition (0xa960, 0xa97f) (Ptr "Hangul Jamo Extended-A\0"#)
-    Javanese -> BlockDefinition (0xa980, 0xa9df) (Ptr "Javanese\0"#)
-    MyanmarExtendedB -> BlockDefinition (0xa9e0, 0xa9ff) (Ptr "Myanmar Extended-B\0"#)
-    Cham -> BlockDefinition (0xaa00, 0xaa5f) (Ptr "Cham\0"#)
-    MyanmarExtendedA -> BlockDefinition (0xaa60, 0xaa7f) (Ptr "Myanmar Extended-A\0"#)
-    TaiViet -> BlockDefinition (0xaa80, 0xaadf) (Ptr "Tai Viet\0"#)
-    MeeteiMayekExtensions -> BlockDefinition (0xaae0, 0xaaff) (Ptr "Meetei Mayek Extensions\0"#)
-    EthiopicExtendedA -> BlockDefinition (0xab00, 0xab2f) (Ptr "Ethiopic Extended-A\0"#)
-    LatinExtendedE -> BlockDefinition (0xab30, 0xab6f) (Ptr "Latin Extended-E\0"#)
-    CherokeeSupplement -> BlockDefinition (0xab70, 0xabbf) (Ptr "Cherokee Supplement\0"#)
-    MeeteiMayek -> BlockDefinition (0xabc0, 0xabff) (Ptr "Meetei Mayek\0"#)
-    HangulSyllables -> BlockDefinition (0xac00, 0xd7af) (Ptr "Hangul Syllables\0"#)
-    HangulJamoExtendedB -> BlockDefinition (0xd7b0, 0xd7ff) (Ptr "Hangul Jamo Extended-B\0"#)
-    HighSurrogates -> BlockDefinition (0xd800, 0xdb7f) (Ptr "High Surrogates\0"#)
-    HighPrivateUseSurrogates -> BlockDefinition (0xdb80, 0xdbff) (Ptr "High Private Use Surrogates\0"#)
-    LowSurrogates -> BlockDefinition (0xdc00, 0xdfff) (Ptr "Low Surrogates\0"#)
-    PrivateUseArea -> BlockDefinition (0xe000, 0xf8ff) (Ptr "Private Use Area\0"#)
-    CJKCompatibilityIdeographs -> BlockDefinition (0xf900, 0xfaff) (Ptr "CJK Compatibility Ideographs\0"#)
-    AlphabeticPresentationForms -> BlockDefinition (0xfb00, 0xfb4f) (Ptr "Alphabetic Presentation Forms\0"#)
-    ArabicPresentationFormsA -> BlockDefinition (0xfb50, 0xfdff) (Ptr "Arabic Presentation Forms-A\0"#)
-    VariationSelectors -> BlockDefinition (0xfe00, 0xfe0f) (Ptr "Variation Selectors\0"#)
-    VerticalForms -> BlockDefinition (0xfe10, 0xfe1f) (Ptr "Vertical Forms\0"#)
-    CombiningHalfMarks -> BlockDefinition (0xfe20, 0xfe2f) (Ptr "Combining Half Marks\0"#)
-    CJKCompatibilityForms -> BlockDefinition (0xfe30, 0xfe4f) (Ptr "CJK Compatibility Forms\0"#)
-    SmallFormVariants -> BlockDefinition (0xfe50, 0xfe6f) (Ptr "Small Form Variants\0"#)
-    ArabicPresentationFormsB -> BlockDefinition (0xfe70, 0xfeff) (Ptr "Arabic Presentation Forms-B\0"#)
-    HalfwidthAndFullwidthForms -> BlockDefinition (0xff00, 0xffef) (Ptr "Halfwidth and Fullwidth Forms\0"#)
-    Specials -> BlockDefinition (0xfff0, 0xffff) (Ptr "Specials\0"#)
-    LinearBSyllabary -> BlockDefinition (0x10000, 0x1007f) (Ptr "Linear B Syllabary\0"#)
-    LinearBIdeograms -> BlockDefinition (0x10080, 0x100ff) (Ptr "Linear B Ideograms\0"#)
-    AegeanNumbers -> BlockDefinition (0x10100, 0x1013f) (Ptr "Aegean Numbers\0"#)
-    AncientGreekNumbers -> BlockDefinition (0x10140, 0x1018f) (Ptr "Ancient Greek Numbers\0"#)
-    AncientSymbols -> BlockDefinition (0x10190, 0x101cf) (Ptr "Ancient Symbols\0"#)
-    PhaistosDisc -> BlockDefinition (0x101d0, 0x101ff) (Ptr "Phaistos Disc\0"#)
-    Lycian -> BlockDefinition (0x10280, 0x1029f) (Ptr "Lycian\0"#)
-    Carian -> BlockDefinition (0x102a0, 0x102df) (Ptr "Carian\0"#)
-    CopticEpactNumbers -> BlockDefinition (0x102e0, 0x102ff) (Ptr "Coptic Epact Numbers\0"#)
-    OldItalic -> BlockDefinition (0x10300, 0x1032f) (Ptr "Old Italic\0"#)
-    Gothic -> BlockDefinition (0x10330, 0x1034f) (Ptr "Gothic\0"#)
-    OldPermic -> BlockDefinition (0x10350, 0x1037f) (Ptr "Old Permic\0"#)
-    Ugaritic -> BlockDefinition (0x10380, 0x1039f) (Ptr "Ugaritic\0"#)
-    OldPersian -> BlockDefinition (0x103a0, 0x103df) (Ptr "Old Persian\0"#)
-    Deseret -> BlockDefinition (0x10400, 0x1044f) (Ptr "Deseret\0"#)
-    Shavian -> BlockDefinition (0x10450, 0x1047f) (Ptr "Shavian\0"#)
-    Osmanya -> BlockDefinition (0x10480, 0x104af) (Ptr "Osmanya\0"#)
-    Osage -> BlockDefinition (0x104b0, 0x104ff) (Ptr "Osage\0"#)
-    Elbasan -> BlockDefinition (0x10500, 0x1052f) (Ptr "Elbasan\0"#)
-    CaucasianAlbanian -> BlockDefinition (0x10530, 0x1056f) (Ptr "Caucasian Albanian\0"#)
-    Vithkuqi -> BlockDefinition (0x10570, 0x105bf) (Ptr "Vithkuqi\0"#)
-    LinearA -> BlockDefinition (0x10600, 0x1077f) (Ptr "Linear A\0"#)
-    LatinExtendedF -> BlockDefinition (0x10780, 0x107bf) (Ptr "Latin Extended-F\0"#)
-    CypriotSyllabary -> BlockDefinition (0x10800, 0x1083f) (Ptr "Cypriot Syllabary\0"#)
-    ImperialAramaic -> BlockDefinition (0x10840, 0x1085f) (Ptr "Imperial Aramaic\0"#)
-    Palmyrene -> BlockDefinition (0x10860, 0x1087f) (Ptr "Palmyrene\0"#)
-    Nabataean -> BlockDefinition (0x10880, 0x108af) (Ptr "Nabataean\0"#)
-    Hatran -> BlockDefinition (0x108e0, 0x108ff) (Ptr "Hatran\0"#)
-    Phoenician -> BlockDefinition (0x10900, 0x1091f) (Ptr "Phoenician\0"#)
-    Lydian -> BlockDefinition (0x10920, 0x1093f) (Ptr "Lydian\0"#)
-    MeroiticHieroglyphs -> BlockDefinition (0x10980, 0x1099f) (Ptr "Meroitic Hieroglyphs\0"#)
-    MeroiticCursive -> BlockDefinition (0x109a0, 0x109ff) (Ptr "Meroitic Cursive\0"#)
-    Kharoshthi -> BlockDefinition (0x10a00, 0x10a5f) (Ptr "Kharoshthi\0"#)
-    OldSouthArabian -> BlockDefinition (0x10a60, 0x10a7f) (Ptr "Old South Arabian\0"#)
-    OldNorthArabian -> BlockDefinition (0x10a80, 0x10a9f) (Ptr "Old North Arabian\0"#)
-    Manichaean -> BlockDefinition (0x10ac0, 0x10aff) (Ptr "Manichaean\0"#)
-    Avestan -> BlockDefinition (0x10b00, 0x10b3f) (Ptr "Avestan\0"#)
-    InscriptionalParthian -> BlockDefinition (0x10b40, 0x10b5f) (Ptr "Inscriptional Parthian\0"#)
-    InscriptionalPahlavi -> BlockDefinition (0x10b60, 0x10b7f) (Ptr "Inscriptional Pahlavi\0"#)
-    PsalterPahlavi -> BlockDefinition (0x10b80, 0x10baf) (Ptr "Psalter Pahlavi\0"#)
-    OldTurkic -> BlockDefinition (0x10c00, 0x10c4f) (Ptr "Old Turkic\0"#)
-    OldHungarian -> BlockDefinition (0x10c80, 0x10cff) (Ptr "Old Hungarian\0"#)
-    HanifiRohingya -> BlockDefinition (0x10d00, 0x10d3f) (Ptr "Hanifi Rohingya\0"#)
-    RumiNumeralSymbols -> BlockDefinition (0x10e60, 0x10e7f) (Ptr "Rumi Numeral Symbols\0"#)
-    Yezidi -> BlockDefinition (0x10e80, 0x10ebf) (Ptr "Yezidi\0"#)
-    ArabicExtendedC -> BlockDefinition (0x10ec0, 0x10eff) (Ptr "Arabic Extended-C\0"#)
-    OldSogdian -> BlockDefinition (0x10f00, 0x10f2f) (Ptr "Old Sogdian\0"#)
-    Sogdian -> BlockDefinition (0x10f30, 0x10f6f) (Ptr "Sogdian\0"#)
-    OldUyghur -> BlockDefinition (0x10f70, 0x10faf) (Ptr "Old Uyghur\0"#)
-    Chorasmian -> BlockDefinition (0x10fb0, 0x10fdf) (Ptr "Chorasmian\0"#)
-    Elymaic -> BlockDefinition (0x10fe0, 0x10fff) (Ptr "Elymaic\0"#)
-    Brahmi -> BlockDefinition (0x11000, 0x1107f) (Ptr "Brahmi\0"#)
-    Kaithi -> BlockDefinition (0x11080, 0x110cf) (Ptr "Kaithi\0"#)
-    SoraSompeng -> BlockDefinition (0x110d0, 0x110ff) (Ptr "Sora Sompeng\0"#)
-    Chakma -> BlockDefinition (0x11100, 0x1114f) (Ptr "Chakma\0"#)
-    Mahajani -> BlockDefinition (0x11150, 0x1117f) (Ptr "Mahajani\0"#)
-    Sharada -> BlockDefinition (0x11180, 0x111df) (Ptr "Sharada\0"#)
-    SinhalaArchaicNumbers -> BlockDefinition (0x111e0, 0x111ff) (Ptr "Sinhala Archaic Numbers\0"#)
-    Khojki -> BlockDefinition (0x11200, 0x1124f) (Ptr "Khojki\0"#)
-    Multani -> BlockDefinition (0x11280, 0x112af) (Ptr "Multani\0"#)
-    Khudawadi -> BlockDefinition (0x112b0, 0x112ff) (Ptr "Khudawadi\0"#)
-    Grantha -> BlockDefinition (0x11300, 0x1137f) (Ptr "Grantha\0"#)
-    Newa -> BlockDefinition (0x11400, 0x1147f) (Ptr "Newa\0"#)
-    Tirhuta -> BlockDefinition (0x11480, 0x114df) (Ptr "Tirhuta\0"#)
-    Siddham -> BlockDefinition (0x11580, 0x115ff) (Ptr "Siddham\0"#)
-    Modi -> BlockDefinition (0x11600, 0x1165f) (Ptr "Modi\0"#)
-    MongolianSupplement -> BlockDefinition (0x11660, 0x1167f) (Ptr "Mongolian Supplement\0"#)
-    Takri -> BlockDefinition (0x11680, 0x116cf) (Ptr "Takri\0"#)
-    Ahom -> BlockDefinition (0x11700, 0x1174f) (Ptr "Ahom\0"#)
-    Dogra -> BlockDefinition (0x11800, 0x1184f) (Ptr "Dogra\0"#)
-    WarangCiti -> BlockDefinition (0x118a0, 0x118ff) (Ptr "Warang Citi\0"#)
-    DivesAkuru -> BlockDefinition (0x11900, 0x1195f) (Ptr "Dives Akuru\0"#)
-    Nandinagari -> BlockDefinition (0x119a0, 0x119ff) (Ptr "Nandinagari\0"#)
-    ZanabazarSquare -> BlockDefinition (0x11a00, 0x11a4f) (Ptr "Zanabazar Square\0"#)
-    Soyombo -> BlockDefinition (0x11a50, 0x11aaf) (Ptr "Soyombo\0"#)
-    UnifiedCanadianAboriginalSyllabicsExtendedA -> BlockDefinition (0x11ab0, 0x11abf) (Ptr "Unified Canadian Aboriginal Syllabics Extended-A\0"#)
-    PauCinHau -> BlockDefinition (0x11ac0, 0x11aff) (Ptr "Pau Cin Hau\0"#)
-    DevanagariExtendedA -> BlockDefinition (0x11b00, 0x11b5f) (Ptr "Devanagari Extended-A\0"#)
-    Bhaiksuki -> BlockDefinition (0x11c00, 0x11c6f) (Ptr "Bhaiksuki\0"#)
-    Marchen -> BlockDefinition (0x11c70, 0x11cbf) (Ptr "Marchen\0"#)
-    MasaramGondi -> BlockDefinition (0x11d00, 0x11d5f) (Ptr "Masaram Gondi\0"#)
-    GunjalaGondi -> BlockDefinition (0x11d60, 0x11daf) (Ptr "Gunjala Gondi\0"#)
-    Makasar -> BlockDefinition (0x11ee0, 0x11eff) (Ptr "Makasar\0"#)
-    Kawi -> BlockDefinition (0x11f00, 0x11f5f) (Ptr "Kawi\0"#)
-    LisuSupplement -> BlockDefinition (0x11fb0, 0x11fbf) (Ptr "Lisu Supplement\0"#)
-    TamilSupplement -> BlockDefinition (0x11fc0, 0x11fff) (Ptr "Tamil Supplement\0"#)
-    Cuneiform -> BlockDefinition (0x12000, 0x123ff) (Ptr "Cuneiform\0"#)
-    CuneiformNumbersAndPunctuation -> BlockDefinition (0x12400, 0x1247f) (Ptr "Cuneiform Numbers and Punctuation\0"#)
-    EarlyDynasticCuneiform -> BlockDefinition (0x12480, 0x1254f) (Ptr "Early Dynastic Cuneiform\0"#)
-    CyproMinoan -> BlockDefinition (0x12f90, 0x12fff) (Ptr "Cypro-Minoan\0"#)
-    EgyptianHieroglyphs -> BlockDefinition (0x13000, 0x1342f) (Ptr "Egyptian Hieroglyphs\0"#)
-    EgyptianHieroglyphFormatControls -> BlockDefinition (0x13430, 0x1345f) (Ptr "Egyptian Hieroglyph Format Controls\0"#)
-    AnatolianHieroglyphs -> BlockDefinition (0x14400, 0x1467f) (Ptr "Anatolian Hieroglyphs\0"#)
-    BamumSupplement -> BlockDefinition (0x16800, 0x16a3f) (Ptr "Bamum Supplement\0"#)
-    Mro -> BlockDefinition (0x16a40, 0x16a6f) (Ptr "Mro\0"#)
-    Tangsa -> BlockDefinition (0x16a70, 0x16acf) (Ptr "Tangsa\0"#)
-    BassaVah -> BlockDefinition (0x16ad0, 0x16aff) (Ptr "Bassa Vah\0"#)
-    PahawhHmong -> BlockDefinition (0x16b00, 0x16b8f) (Ptr "Pahawh Hmong\0"#)
-    Medefaidrin -> BlockDefinition (0x16e40, 0x16e9f) (Ptr "Medefaidrin\0"#)
-    Miao -> BlockDefinition (0x16f00, 0x16f9f) (Ptr "Miao\0"#)
-    IdeographicSymbolsAndPunctuation -> BlockDefinition (0x16fe0, 0x16fff) (Ptr "Ideographic Symbols and Punctuation\0"#)
-    Tangut -> BlockDefinition (0x17000, 0x187ff) (Ptr "Tangut\0"#)
-    TangutComponents -> BlockDefinition (0x18800, 0x18aff) (Ptr "Tangut Components\0"#)
-    KhitanSmallScript -> BlockDefinition (0x18b00, 0x18cff) (Ptr "Khitan Small Script\0"#)
-    TangutSupplement -> BlockDefinition (0x18d00, 0x18d7f) (Ptr "Tangut Supplement\0"#)
-    KanaExtendedB -> BlockDefinition (0x1aff0, 0x1afff) (Ptr "Kana Extended-B\0"#)
-    KanaSupplement -> BlockDefinition (0x1b000, 0x1b0ff) (Ptr "Kana Supplement\0"#)
-    KanaExtendedA -> BlockDefinition (0x1b100, 0x1b12f) (Ptr "Kana Extended-A\0"#)
-    SmallKanaExtension -> BlockDefinition (0x1b130, 0x1b16f) (Ptr "Small Kana Extension\0"#)
-    Nushu -> BlockDefinition (0x1b170, 0x1b2ff) (Ptr "Nushu\0"#)
-    Duployan -> BlockDefinition (0x1bc00, 0x1bc9f) (Ptr "Duployan\0"#)
-    ShorthandFormatControls -> BlockDefinition (0x1bca0, 0x1bcaf) (Ptr "Shorthand Format Controls\0"#)
-    ZnamennyMusicalNotation -> BlockDefinition (0x1cf00, 0x1cfcf) (Ptr "Znamenny Musical Notation\0"#)
-    ByzantineMusicalSymbols -> BlockDefinition (0x1d000, 0x1d0ff) (Ptr "Byzantine Musical Symbols\0"#)
-    MusicalSymbols -> BlockDefinition (0x1d100, 0x1d1ff) (Ptr "Musical Symbols\0"#)
-    AncientGreekMusicalNotation -> BlockDefinition (0x1d200, 0x1d24f) (Ptr "Ancient Greek Musical Notation\0"#)
-    KaktovikNumerals -> BlockDefinition (0x1d2c0, 0x1d2df) (Ptr "Kaktovik Numerals\0"#)
-    MayanNumerals -> BlockDefinition (0x1d2e0, 0x1d2ff) (Ptr "Mayan Numerals\0"#)
-    TaiXuanJingSymbols -> BlockDefinition (0x1d300, 0x1d35f) (Ptr "Tai Xuan Jing Symbols\0"#)
-    CountingRodNumerals -> BlockDefinition (0x1d360, 0x1d37f) (Ptr "Counting Rod Numerals\0"#)
-    MathematicalAlphanumericSymbols -> BlockDefinition (0x1d400, 0x1d7ff) (Ptr "Mathematical Alphanumeric Symbols\0"#)
-    SuttonSignWriting -> BlockDefinition (0x1d800, 0x1daaf) (Ptr "Sutton SignWriting\0"#)
-    LatinExtendedG -> BlockDefinition (0x1df00, 0x1dfff) (Ptr "Latin Extended-G\0"#)
-    GlagoliticSupplement -> BlockDefinition (0x1e000, 0x1e02f) (Ptr "Glagolitic Supplement\0"#)
-    CyrillicExtendedD -> BlockDefinition (0x1e030, 0x1e08f) (Ptr "Cyrillic Extended-D\0"#)
-    NyiakengPuachueHmong -> BlockDefinition (0x1e100, 0x1e14f) (Ptr "Nyiakeng Puachue Hmong\0"#)
-    Toto -> BlockDefinition (0x1e290, 0x1e2bf) (Ptr "Toto\0"#)
-    Wancho -> BlockDefinition (0x1e2c0, 0x1e2ff) (Ptr "Wancho\0"#)
-    NagMundari -> BlockDefinition (0x1e4d0, 0x1e4ff) (Ptr "Nag Mundari\0"#)
-    EthiopicExtendedB -> BlockDefinition (0x1e7e0, 0x1e7ff) (Ptr "Ethiopic Extended-B\0"#)
-    MendeKikakui -> BlockDefinition (0x1e800, 0x1e8df) (Ptr "Mende Kikakui\0"#)
-    Adlam -> BlockDefinition (0x1e900, 0x1e95f) (Ptr "Adlam\0"#)
-    IndicSiyaqNumbers -> BlockDefinition (0x1ec70, 0x1ecbf) (Ptr "Indic Siyaq Numbers\0"#)
-    OttomanSiyaqNumbers -> BlockDefinition (0x1ed00, 0x1ed4f) (Ptr "Ottoman Siyaq Numbers\0"#)
-    ArabicMathematicalAlphabeticSymbols -> BlockDefinition (0x1ee00, 0x1eeff) (Ptr "Arabic Mathematical Alphabetic Symbols\0"#)
-    MahjongTiles -> BlockDefinition (0x1f000, 0x1f02f) (Ptr "Mahjong Tiles\0"#)
-    DominoTiles -> BlockDefinition (0x1f030, 0x1f09f) (Ptr "Domino Tiles\0"#)
-    PlayingCards -> BlockDefinition (0x1f0a0, 0x1f0ff) (Ptr "Playing Cards\0"#)
-    EnclosedAlphanumericSupplement -> BlockDefinition (0x1f100, 0x1f1ff) (Ptr "Enclosed Alphanumeric Supplement\0"#)
-    EnclosedIdeographicSupplement -> BlockDefinition (0x1f200, 0x1f2ff) (Ptr "Enclosed Ideographic Supplement\0"#)
-    MiscellaneousSymbolsAndPictographs -> BlockDefinition (0x1f300, 0x1f5ff) (Ptr "Miscellaneous Symbols and Pictographs\0"#)
-    Emoticons -> BlockDefinition (0x1f600, 0x1f64f) (Ptr "Emoticons\0"#)
-    OrnamentalDingbats -> BlockDefinition (0x1f650, 0x1f67f) (Ptr "Ornamental Dingbats\0"#)
-    TransportAndMapSymbols -> BlockDefinition (0x1f680, 0x1f6ff) (Ptr "Transport and Map Symbols\0"#)
-    AlchemicalSymbols -> BlockDefinition (0x1f700, 0x1f77f) (Ptr "Alchemical Symbols\0"#)
-    GeometricShapesExtended -> BlockDefinition (0x1f780, 0x1f7ff) (Ptr "Geometric Shapes Extended\0"#)
-    SupplementalArrowsC -> BlockDefinition (0x1f800, 0x1f8ff) (Ptr "Supplemental Arrows-C\0"#)
-    SupplementalSymbolsAndPictographs -> BlockDefinition (0x1f900, 0x1f9ff) (Ptr "Supplemental Symbols and Pictographs\0"#)
-    ChessSymbols -> BlockDefinition (0x1fa00, 0x1fa6f) (Ptr "Chess Symbols\0"#)
-    SymbolsAndPictographsExtendedA -> BlockDefinition (0x1fa70, 0x1faff) (Ptr "Symbols and Pictographs Extended-A\0"#)
-    SymbolsForLegacyComputing -> BlockDefinition (0x1fb00, 0x1fbff) (Ptr "Symbols for Legacy Computing\0"#)
-    CJKUnifiedIdeographsExtensionB -> BlockDefinition (0x20000, 0x2a6df) (Ptr "CJK Unified Ideographs Extension B\0"#)
-    CJKUnifiedIdeographsExtensionC -> BlockDefinition (0x2a700, 0x2b73f) (Ptr "CJK Unified Ideographs Extension C\0"#)
-    CJKUnifiedIdeographsExtensionD -> BlockDefinition (0x2b740, 0x2b81f) (Ptr "CJK Unified Ideographs Extension D\0"#)
-    CJKUnifiedIdeographsExtensionE -> BlockDefinition (0x2b820, 0x2ceaf) (Ptr "CJK Unified Ideographs Extension E\0"#)
-    CJKUnifiedIdeographsExtensionF -> BlockDefinition (0x2ceb0, 0x2ebef) (Ptr "CJK Unified Ideographs Extension F\0"#)
-    CJKCompatibilityIdeographsSupplement -> BlockDefinition (0x2f800, 0x2fa1f) (Ptr "CJK Compatibility Ideographs Supplement\0"#)
-    CJKUnifiedIdeographsExtensionG -> BlockDefinition (0x30000, 0x3134f) (Ptr "CJK Unified Ideographs Extension G\0"#)
-    CJKUnifiedIdeographsExtensionH -> BlockDefinition (0x31350, 0x323af) (Ptr "CJK Unified Ideographs Extension H\0"#)
-    Tags -> BlockDefinition (0xe0000, 0xe007f) (Ptr "Tags\0"#)
-    VariationSelectorsSupplement -> BlockDefinition (0xe0100, 0xe01ef) (Ptr "Variation Selectors Supplement\0"#)
-    SupplementaryPrivateUseAreaA -> BlockDefinition (0xf0000, 0xfffff) (Ptr "Supplementary Private Use Area-A\0"#)
-    SupplementaryPrivateUseAreaB -> BlockDefinition (0x100000, 0x10ffff) (Ptr "Supplementary Private Use Area-B\0"#)
-
--- | Character block, if defined.
+-- Undefined for values greater than 325.
+--
+-- Encoding:
+--
+-- * Lower bound (UTF-32LE)
+-- * Upper bound (UTF-32LE)
+-- * Name (null terminated ASCII string)
 --
 -- @since 0.3.1
-block :: Char -> Maybe Int
-block (C# c#) = getBlock 0# 326#
+blockDefinition :: Int# -> Addr#
+blockDefinition = \case
+    0# -> "\0\0\0\0\127\0\0\0Basic Latin\0"#
+    1# -> "\128\0\0\0\255\0\0\0Latin-1 Supplement\0"#
+    2# -> "\0\1\0\0\127\1\0\0Latin Extended-A\0"#
+    3# -> "\128\1\0\0\79\2\0\0Latin Extended-B\0"#
+    4# -> "\80\2\0\0\175\2\0\0IPA Extensions\0"#
+    5# -> "\176\2\0\0\255\2\0\0Spacing Modifier Letters\0"#
+    6# -> "\0\3\0\0\111\3\0\0Combining Diacritical Marks\0"#
+    7# -> "\112\3\0\0\255\3\0\0Greek and Coptic\0"#
+    8# -> "\0\4\0\0\255\4\0\0Cyrillic\0"#
+    9# -> "\0\5\0\0\47\5\0\0Cyrillic Supplement\0"#
+    10# -> "\48\5\0\0\143\5\0\0Armenian\0"#
+    11# -> "\144\5\0\0\255\5\0\0Hebrew\0"#
+    12# -> "\0\6\0\0\255\6\0\0Arabic\0"#
+    13# -> "\0\7\0\0\79\7\0\0Syriac\0"#
+    14# -> "\80\7\0\0\127\7\0\0Arabic Supplement\0"#
+    15# -> "\128\7\0\0\191\7\0\0Thaana\0"#
+    16# -> "\192\7\0\0\255\7\0\0NKo\0"#
+    17# -> "\0\8\0\0\63\8\0\0Samaritan\0"#
+    18# -> "\64\8\0\0\95\8\0\0Mandaic\0"#
+    19# -> "\96\8\0\0\111\8\0\0Syriac Supplement\0"#
+    20# -> "\112\8\0\0\159\8\0\0Arabic Extended-B\0"#
+    21# -> "\160\8\0\0\255\8\0\0Arabic Extended-A\0"#
+    22# -> "\0\9\0\0\127\9\0\0Devanagari\0"#
+    23# -> "\128\9\0\0\255\9\0\0Bengali\0"#
+    24# -> "\0\10\0\0\127\10\0\0Gurmukhi\0"#
+    25# -> "\128\10\0\0\255\10\0\0Gujarati\0"#
+    26# -> "\0\11\0\0\127\11\0\0Oriya\0"#
+    27# -> "\128\11\0\0\255\11\0\0Tamil\0"#
+    28# -> "\0\12\0\0\127\12\0\0Telugu\0"#
+    29# -> "\128\12\0\0\255\12\0\0Kannada\0"#
+    30# -> "\0\13\0\0\127\13\0\0Malayalam\0"#
+    31# -> "\128\13\0\0\255\13\0\0Sinhala\0"#
+    32# -> "\0\14\0\0\127\14\0\0Thai\0"#
+    33# -> "\128\14\0\0\255\14\0\0Lao\0"#
+    34# -> "\0\15\0\0\255\15\0\0Tibetan\0"#
+    35# -> "\0\16\0\0\159\16\0\0Myanmar\0"#
+    36# -> "\160\16\0\0\255\16\0\0Georgian\0"#
+    37# -> "\0\17\0\0\255\17\0\0Hangul Jamo\0"#
+    38# -> "\0\18\0\0\127\19\0\0Ethiopic\0"#
+    39# -> "\128\19\0\0\159\19\0\0Ethiopic Supplement\0"#
+    40# -> "\160\19\0\0\255\19\0\0Cherokee\0"#
+    41# -> "\0\20\0\0\127\22\0\0Unified Canadian Aboriginal Syllabics\0"#
+    42# -> "\128\22\0\0\159\22\0\0Ogham\0"#
+    43# -> "\160\22\0\0\255\22\0\0Runic\0"#
+    44# -> "\0\23\0\0\31\23\0\0Tagalog\0"#
+    45# -> "\32\23\0\0\63\23\0\0Hanunoo\0"#
+    46# -> "\64\23\0\0\95\23\0\0Buhid\0"#
+    47# -> "\96\23\0\0\127\23\0\0Tagbanwa\0"#
+    48# -> "\128\23\0\0\255\23\0\0Khmer\0"#
+    49# -> "\0\24\0\0\175\24\0\0Mongolian\0"#
+    50# -> "\176\24\0\0\255\24\0\0Unified Canadian Aboriginal Syllabics Extended\0"#
+    51# -> "\0\25\0\0\79\25\0\0Limbu\0"#
+    52# -> "\80\25\0\0\127\25\0\0Tai Le\0"#
+    53# -> "\128\25\0\0\223\25\0\0New Tai Lue\0"#
+    54# -> "\224\25\0\0\255\25\0\0Khmer Symbols\0"#
+    55# -> "\0\26\0\0\31\26\0\0Buginese\0"#
+    56# -> "\32\26\0\0\175\26\0\0Tai Tham\0"#
+    57# -> "\176\26\0\0\255\26\0\0Combining Diacritical Marks Extended\0"#
+    58# -> "\0\27\0\0\127\27\0\0Balinese\0"#
+    59# -> "\128\27\0\0\191\27\0\0Sundanese\0"#
+    60# -> "\192\27\0\0\255\27\0\0Batak\0"#
+    61# -> "\0\28\0\0\79\28\0\0Lepcha\0"#
+    62# -> "\80\28\0\0\127\28\0\0Ol Chiki\0"#
+    63# -> "\128\28\0\0\143\28\0\0Cyrillic Extended-C\0"#
+    64# -> "\144\28\0\0\191\28\0\0Georgian Extended\0"#
+    65# -> "\192\28\0\0\207\28\0\0Sundanese Supplement\0"#
+    66# -> "\208\28\0\0\255\28\0\0Vedic Extensions\0"#
+    67# -> "\0\29\0\0\127\29\0\0Phonetic Extensions\0"#
+    68# -> "\128\29\0\0\191\29\0\0Phonetic Extensions Supplement\0"#
+    69# -> "\192\29\0\0\255\29\0\0Combining Diacritical Marks Supplement\0"#
+    70# -> "\0\30\0\0\255\30\0\0Latin Extended Additional\0"#
+    71# -> "\0\31\0\0\255\31\0\0Greek Extended\0"#
+    72# -> "\0\32\0\0\111\32\0\0General Punctuation\0"#
+    73# -> "\112\32\0\0\159\32\0\0Superscripts and Subscripts\0"#
+    74# -> "\160\32\0\0\207\32\0\0Currency Symbols\0"#
+    75# -> "\208\32\0\0\255\32\0\0Combining Diacritical Marks for Symbols\0"#
+    76# -> "\0\33\0\0\79\33\0\0Letterlike Symbols\0"#
+    77# -> "\80\33\0\0\143\33\0\0Number Forms\0"#
+    78# -> "\144\33\0\0\255\33\0\0Arrows\0"#
+    79# -> "\0\34\0\0\255\34\0\0Mathematical Operators\0"#
+    80# -> "\0\35\0\0\255\35\0\0Miscellaneous Technical\0"#
+    81# -> "\0\36\0\0\63\36\0\0Control Pictures\0"#
+    82# -> "\64\36\0\0\95\36\0\0Optical Character Recognition\0"#
+    83# -> "\96\36\0\0\255\36\0\0Enclosed Alphanumerics\0"#
+    84# -> "\0\37\0\0\127\37\0\0Box Drawing\0"#
+    85# -> "\128\37\0\0\159\37\0\0Block Elements\0"#
+    86# -> "\160\37\0\0\255\37\0\0Geometric Shapes\0"#
+    87# -> "\0\38\0\0\255\38\0\0Miscellaneous Symbols\0"#
+    88# -> "\0\39\0\0\191\39\0\0Dingbats\0"#
+    89# -> "\192\39\0\0\239\39\0\0Miscellaneous Mathematical Symbols-A\0"#
+    90# -> "\240\39\0\0\255\39\0\0Supplemental Arrows-A\0"#
+    91# -> "\0\40\0\0\255\40\0\0Braille Patterns\0"#
+    92# -> "\0\41\0\0\127\41\0\0Supplemental Arrows-B\0"#
+    93# -> "\128\41\0\0\255\41\0\0Miscellaneous Mathematical Symbols-B\0"#
+    94# -> "\0\42\0\0\255\42\0\0Supplemental Mathematical Operators\0"#
+    95# -> "\0\43\0\0\255\43\0\0Miscellaneous Symbols and Arrows\0"#
+    96# -> "\0\44\0\0\95\44\0\0Glagolitic\0"#
+    97# -> "\96\44\0\0\127\44\0\0Latin Extended-C\0"#
+    98# -> "\128\44\0\0\255\44\0\0Coptic\0"#
+    99# -> "\0\45\0\0\47\45\0\0Georgian Supplement\0"#
+    100# -> "\48\45\0\0\127\45\0\0Tifinagh\0"#
+    101# -> "\128\45\0\0\223\45\0\0Ethiopic Extended\0"#
+    102# -> "\224\45\0\0\255\45\0\0Cyrillic Extended-A\0"#
+    103# -> "\0\46\0\0\127\46\0\0Supplemental Punctuation\0"#
+    104# -> "\128\46\0\0\255\46\0\0CJK Radicals Supplement\0"#
+    105# -> "\0\47\0\0\223\47\0\0Kangxi Radicals\0"#
+    106# -> "\240\47\0\0\255\47\0\0Ideographic Description Characters\0"#
+    107# -> "\0\48\0\0\63\48\0\0CJK Symbols and Punctuation\0"#
+    108# -> "\64\48\0\0\159\48\0\0Hiragana\0"#
+    109# -> "\160\48\0\0\255\48\0\0Katakana\0"#
+    110# -> "\0\49\0\0\47\49\0\0Bopomofo\0"#
+    111# -> "\48\49\0\0\143\49\0\0Hangul Compatibility Jamo\0"#
+    112# -> "\144\49\0\0\159\49\0\0Kanbun\0"#
+    113# -> "\160\49\0\0\191\49\0\0Bopomofo Extended\0"#
+    114# -> "\192\49\0\0\239\49\0\0CJK Strokes\0"#
+    115# -> "\240\49\0\0\255\49\0\0Katakana Phonetic Extensions\0"#
+    116# -> "\0\50\0\0\255\50\0\0Enclosed CJK Letters and Months\0"#
+    117# -> "\0\51\0\0\255\51\0\0CJK Compatibility\0"#
+    118# -> "\0\52\0\0\191\77\0\0CJK Unified Ideographs Extension A\0"#
+    119# -> "\192\77\0\0\255\77\0\0Yijing Hexagram Symbols\0"#
+    120# -> "\0\78\0\0\255\159\0\0CJK Unified Ideographs\0"#
+    121# -> "\0\160\0\0\143\164\0\0Yi Syllables\0"#
+    122# -> "\144\164\0\0\207\164\0\0Yi Radicals\0"#
+    123# -> "\208\164\0\0\255\164\0\0Lisu\0"#
+    124# -> "\0\165\0\0\63\166\0\0Vai\0"#
+    125# -> "\64\166\0\0\159\166\0\0Cyrillic Extended-B\0"#
+    126# -> "\160\166\0\0\255\166\0\0Bamum\0"#
+    127# -> "\0\167\0\0\31\167\0\0Modifier Tone Letters\0"#
+    128# -> "\32\167\0\0\255\167\0\0Latin Extended-D\0"#
+    129# -> "\0\168\0\0\47\168\0\0Syloti Nagri\0"#
+    130# -> "\48\168\0\0\63\168\0\0Common Indic Number Forms\0"#
+    131# -> "\64\168\0\0\127\168\0\0Phags-pa\0"#
+    132# -> "\128\168\0\0\223\168\0\0Saurashtra\0"#
+    133# -> "\224\168\0\0\255\168\0\0Devanagari Extended\0"#
+    134# -> "\0\169\0\0\47\169\0\0Kayah Li\0"#
+    135# -> "\48\169\0\0\95\169\0\0Rejang\0"#
+    136# -> "\96\169\0\0\127\169\0\0Hangul Jamo Extended-A\0"#
+    137# -> "\128\169\0\0\223\169\0\0Javanese\0"#
+    138# -> "\224\169\0\0\255\169\0\0Myanmar Extended-B\0"#
+    139# -> "\0\170\0\0\95\170\0\0Cham\0"#
+    140# -> "\96\170\0\0\127\170\0\0Myanmar Extended-A\0"#
+    141# -> "\128\170\0\0\223\170\0\0Tai Viet\0"#
+    142# -> "\224\170\0\0\255\170\0\0Meetei Mayek Extensions\0"#
+    143# -> "\0\171\0\0\47\171\0\0Ethiopic Extended-A\0"#
+    144# -> "\48\171\0\0\111\171\0\0Latin Extended-E\0"#
+    145# -> "\112\171\0\0\191\171\0\0Cherokee Supplement\0"#
+    146# -> "\192\171\0\0\255\171\0\0Meetei Mayek\0"#
+    147# -> "\0\172\0\0\175\215\0\0Hangul Syllables\0"#
+    148# -> "\176\215\0\0\255\215\0\0Hangul Jamo Extended-B\0"#
+    149# -> "\0\216\0\0\127\219\0\0High Surrogates\0"#
+    150# -> "\128\219\0\0\255\219\0\0High Private Use Surrogates\0"#
+    151# -> "\0\220\0\0\255\223\0\0Low Surrogates\0"#
+    152# -> "\0\224\0\0\255\248\0\0Private Use Area\0"#
+    153# -> "\0\249\0\0\255\250\0\0CJK Compatibility Ideographs\0"#
+    154# -> "\0\251\0\0\79\251\0\0Alphabetic Presentation Forms\0"#
+    155# -> "\80\251\0\0\255\253\0\0Arabic Presentation Forms-A\0"#
+    156# -> "\0\254\0\0\15\254\0\0Variation Selectors\0"#
+    157# -> "\16\254\0\0\31\254\0\0Vertical Forms\0"#
+    158# -> "\32\254\0\0\47\254\0\0Combining Half Marks\0"#
+    159# -> "\48\254\0\0\79\254\0\0CJK Compatibility Forms\0"#
+    160# -> "\80\254\0\0\111\254\0\0Small Form Variants\0"#
+    161# -> "\112\254\0\0\255\254\0\0Arabic Presentation Forms-B\0"#
+    162# -> "\0\255\0\0\239\255\0\0Halfwidth and Fullwidth Forms\0"#
+    163# -> "\240\255\0\0\255\255\0\0Specials\0"#
+    164# -> "\0\0\1\0\127\0\1\0Linear B Syllabary\0"#
+    165# -> "\128\0\1\0\255\0\1\0Linear B Ideograms\0"#
+    166# -> "\0\1\1\0\63\1\1\0Aegean Numbers\0"#
+    167# -> "\64\1\1\0\143\1\1\0Ancient Greek Numbers\0"#
+    168# -> "\144\1\1\0\207\1\1\0Ancient Symbols\0"#
+    169# -> "\208\1\1\0\255\1\1\0Phaistos Disc\0"#
+    170# -> "\128\2\1\0\159\2\1\0Lycian\0"#
+    171# -> "\160\2\1\0\223\2\1\0Carian\0"#
+    172# -> "\224\2\1\0\255\2\1\0Coptic Epact Numbers\0"#
+    173# -> "\0\3\1\0\47\3\1\0Old Italic\0"#
+    174# -> "\48\3\1\0\79\3\1\0Gothic\0"#
+    175# -> "\80\3\1\0\127\3\1\0Old Permic\0"#
+    176# -> "\128\3\1\0\159\3\1\0Ugaritic\0"#
+    177# -> "\160\3\1\0\223\3\1\0Old Persian\0"#
+    178# -> "\0\4\1\0\79\4\1\0Deseret\0"#
+    179# -> "\80\4\1\0\127\4\1\0Shavian\0"#
+    180# -> "\128\4\1\0\175\4\1\0Osmanya\0"#
+    181# -> "\176\4\1\0\255\4\1\0Osage\0"#
+    182# -> "\0\5\1\0\47\5\1\0Elbasan\0"#
+    183# -> "\48\5\1\0\111\5\1\0Caucasian Albanian\0"#
+    184# -> "\112\5\1\0\191\5\1\0Vithkuqi\0"#
+    185# -> "\0\6\1\0\127\7\1\0Linear A\0"#
+    186# -> "\128\7\1\0\191\7\1\0Latin Extended-F\0"#
+    187# -> "\0\8\1\0\63\8\1\0Cypriot Syllabary\0"#
+    188# -> "\64\8\1\0\95\8\1\0Imperial Aramaic\0"#
+    189# -> "\96\8\1\0\127\8\1\0Palmyrene\0"#
+    190# -> "\128\8\1\0\175\8\1\0Nabataean\0"#
+    191# -> "\224\8\1\0\255\8\1\0Hatran\0"#
+    192# -> "\0\9\1\0\31\9\1\0Phoenician\0"#
+    193# -> "\32\9\1\0\63\9\1\0Lydian\0"#
+    194# -> "\128\9\1\0\159\9\1\0Meroitic Hieroglyphs\0"#
+    195# -> "\160\9\1\0\255\9\1\0Meroitic Cursive\0"#
+    196# -> "\0\10\1\0\95\10\1\0Kharoshthi\0"#
+    197# -> "\96\10\1\0\127\10\1\0Old South Arabian\0"#
+    198# -> "\128\10\1\0\159\10\1\0Old North Arabian\0"#
+    199# -> "\192\10\1\0\255\10\1\0Manichaean\0"#
+    200# -> "\0\11\1\0\63\11\1\0Avestan\0"#
+    201# -> "\64\11\1\0\95\11\1\0Inscriptional Parthian\0"#
+    202# -> "\96\11\1\0\127\11\1\0Inscriptional Pahlavi\0"#
+    203# -> "\128\11\1\0\175\11\1\0Psalter Pahlavi\0"#
+    204# -> "\0\12\1\0\79\12\1\0Old Turkic\0"#
+    205# -> "\128\12\1\0\255\12\1\0Old Hungarian\0"#
+    206# -> "\0\13\1\0\63\13\1\0Hanifi Rohingya\0"#
+    207# -> "\96\14\1\0\127\14\1\0Rumi Numeral Symbols\0"#
+    208# -> "\128\14\1\0\191\14\1\0Yezidi\0"#
+    209# -> "\192\14\1\0\255\14\1\0Arabic Extended-C\0"#
+    210# -> "\0\15\1\0\47\15\1\0Old Sogdian\0"#
+    211# -> "\48\15\1\0\111\15\1\0Sogdian\0"#
+    212# -> "\112\15\1\0\175\15\1\0Old Uyghur\0"#
+    213# -> "\176\15\1\0\223\15\1\0Chorasmian\0"#
+    214# -> "\224\15\1\0\255\15\1\0Elymaic\0"#
+    215# -> "\0\16\1\0\127\16\1\0Brahmi\0"#
+    216# -> "\128\16\1\0\207\16\1\0Kaithi\0"#
+    217# -> "\208\16\1\0\255\16\1\0Sora Sompeng\0"#
+    218# -> "\0\17\1\0\79\17\1\0Chakma\0"#
+    219# -> "\80\17\1\0\127\17\1\0Mahajani\0"#
+    220# -> "\128\17\1\0\223\17\1\0Sharada\0"#
+    221# -> "\224\17\1\0\255\17\1\0Sinhala Archaic Numbers\0"#
+    222# -> "\0\18\1\0\79\18\1\0Khojki\0"#
+    223# -> "\128\18\1\0\175\18\1\0Multani\0"#
+    224# -> "\176\18\1\0\255\18\1\0Khudawadi\0"#
+    225# -> "\0\19\1\0\127\19\1\0Grantha\0"#
+    226# -> "\0\20\1\0\127\20\1\0Newa\0"#
+    227# -> "\128\20\1\0\223\20\1\0Tirhuta\0"#
+    228# -> "\128\21\1\0\255\21\1\0Siddham\0"#
+    229# -> "\0\22\1\0\95\22\1\0Modi\0"#
+    230# -> "\96\22\1\0\127\22\1\0Mongolian Supplement\0"#
+    231# -> "\128\22\1\0\207\22\1\0Takri\0"#
+    232# -> "\0\23\1\0\79\23\1\0Ahom\0"#
+    233# -> "\0\24\1\0\79\24\1\0Dogra\0"#
+    234# -> "\160\24\1\0\255\24\1\0Warang Citi\0"#
+    235# -> "\0\25\1\0\95\25\1\0Dives Akuru\0"#
+    236# -> "\160\25\1\0\255\25\1\0Nandinagari\0"#
+    237# -> "\0\26\1\0\79\26\1\0Zanabazar Square\0"#
+    238# -> "\80\26\1\0\175\26\1\0Soyombo\0"#
+    239# -> "\176\26\1\0\191\26\1\0Unified Canadian Aboriginal Syllabics Extended-A\0"#
+    240# -> "\192\26\1\0\255\26\1\0Pau Cin Hau\0"#
+    241# -> "\0\27\1\0\95\27\1\0Devanagari Extended-A\0"#
+    242# -> "\0\28\1\0\111\28\1\0Bhaiksuki\0"#
+    243# -> "\112\28\1\0\191\28\1\0Marchen\0"#
+    244# -> "\0\29\1\0\95\29\1\0Masaram Gondi\0"#
+    245# -> "\96\29\1\0\175\29\1\0Gunjala Gondi\0"#
+    246# -> "\224\30\1\0\255\30\1\0Makasar\0"#
+    247# -> "\0\31\1\0\95\31\1\0Kawi\0"#
+    248# -> "\176\31\1\0\191\31\1\0Lisu Supplement\0"#
+    249# -> "\192\31\1\0\255\31\1\0Tamil Supplement\0"#
+    250# -> "\0\32\1\0\255\35\1\0Cuneiform\0"#
+    251# -> "\0\36\1\0\127\36\1\0Cuneiform Numbers and Punctuation\0"#
+    252# -> "\128\36\1\0\79\37\1\0Early Dynastic Cuneiform\0"#
+    253# -> "\144\47\1\0\255\47\1\0Cypro-Minoan\0"#
+    254# -> "\0\48\1\0\47\52\1\0Egyptian Hieroglyphs\0"#
+    255# -> "\48\52\1\0\95\52\1\0Egyptian Hieroglyph Format Controls\0"#
+    256# -> "\0\68\1\0\127\70\1\0Anatolian Hieroglyphs\0"#
+    257# -> "\0\104\1\0\63\106\1\0Bamum Supplement\0"#
+    258# -> "\64\106\1\0\111\106\1\0Mro\0"#
+    259# -> "\112\106\1\0\207\106\1\0Tangsa\0"#
+    260# -> "\208\106\1\0\255\106\1\0Bassa Vah\0"#
+    261# -> "\0\107\1\0\143\107\1\0Pahawh Hmong\0"#
+    262# -> "\64\110\1\0\159\110\1\0Medefaidrin\0"#
+    263# -> "\0\111\1\0\159\111\1\0Miao\0"#
+    264# -> "\224\111\1\0\255\111\1\0Ideographic Symbols and Punctuation\0"#
+    265# -> "\0\112\1\0\255\135\1\0Tangut\0"#
+    266# -> "\0\136\1\0\255\138\1\0Tangut Components\0"#
+    267# -> "\0\139\1\0\255\140\1\0Khitan Small Script\0"#
+    268# -> "\0\141\1\0\127\141\1\0Tangut Supplement\0"#
+    269# -> "\240\175\1\0\255\175\1\0Kana Extended-B\0"#
+    270# -> "\0\176\1\0\255\176\1\0Kana Supplement\0"#
+    271# -> "\0\177\1\0\47\177\1\0Kana Extended-A\0"#
+    272# -> "\48\177\1\0\111\177\1\0Small Kana Extension\0"#
+    273# -> "\112\177\1\0\255\178\1\0Nushu\0"#
+    274# -> "\0\188\1\0\159\188\1\0Duployan\0"#
+    275# -> "\160\188\1\0\175\188\1\0Shorthand Format Controls\0"#
+    276# -> "\0\207\1\0\207\207\1\0Znamenny Musical Notation\0"#
+    277# -> "\0\208\1\0\255\208\1\0Byzantine Musical Symbols\0"#
+    278# -> "\0\209\1\0\255\209\1\0Musical Symbols\0"#
+    279# -> "\0\210\1\0\79\210\1\0Ancient Greek Musical Notation\0"#
+    280# -> "\192\210\1\0\223\210\1\0Kaktovik Numerals\0"#
+    281# -> "\224\210\1\0\255\210\1\0Mayan Numerals\0"#
+    282# -> "\0\211\1\0\95\211\1\0Tai Xuan Jing Symbols\0"#
+    283# -> "\96\211\1\0\127\211\1\0Counting Rod Numerals\0"#
+    284# -> "\0\212\1\0\255\215\1\0Mathematical Alphanumeric Symbols\0"#
+    285# -> "\0\216\1\0\175\218\1\0Sutton SignWriting\0"#
+    286# -> "\0\223\1\0\255\223\1\0Latin Extended-G\0"#
+    287# -> "\0\224\1\0\47\224\1\0Glagolitic Supplement\0"#
+    288# -> "\48\224\1\0\143\224\1\0Cyrillic Extended-D\0"#
+    289# -> "\0\225\1\0\79\225\1\0Nyiakeng Puachue Hmong\0"#
+    290# -> "\144\226\1\0\191\226\1\0Toto\0"#
+    291# -> "\192\226\1\0\255\226\1\0Wancho\0"#
+    292# -> "\208\228\1\0\255\228\1\0Nag Mundari\0"#
+    293# -> "\224\231\1\0\255\231\1\0Ethiopic Extended-B\0"#
+    294# -> "\0\232\1\0\223\232\1\0Mende Kikakui\0"#
+    295# -> "\0\233\1\0\95\233\1\0Adlam\0"#
+    296# -> "\112\236\1\0\191\236\1\0Indic Siyaq Numbers\0"#
+    297# -> "\0\237\1\0\79\237\1\0Ottoman Siyaq Numbers\0"#
+    298# -> "\0\238\1\0\255\238\1\0Arabic Mathematical Alphabetic Symbols\0"#
+    299# -> "\0\240\1\0\47\240\1\0Mahjong Tiles\0"#
+    300# -> "\48\240\1\0\159\240\1\0Domino Tiles\0"#
+    301# -> "\160\240\1\0\255\240\1\0Playing Cards\0"#
+    302# -> "\0\241\1\0\255\241\1\0Enclosed Alphanumeric Supplement\0"#
+    303# -> "\0\242\1\0\255\242\1\0Enclosed Ideographic Supplement\0"#
+    304# -> "\0\243\1\0\255\245\1\0Miscellaneous Symbols and Pictographs\0"#
+    305# -> "\0\246\1\0\79\246\1\0Emoticons\0"#
+    306# -> "\80\246\1\0\127\246\1\0Ornamental Dingbats\0"#
+    307# -> "\128\246\1\0\255\246\1\0Transport and Map Symbols\0"#
+    308# -> "\0\247\1\0\127\247\1\0Alchemical Symbols\0"#
+    309# -> "\128\247\1\0\255\247\1\0Geometric Shapes Extended\0"#
+    310# -> "\0\248\1\0\255\248\1\0Supplemental Arrows-C\0"#
+    311# -> "\0\249\1\0\255\249\1\0Supplemental Symbols and Pictographs\0"#
+    312# -> "\0\250\1\0\111\250\1\0Chess Symbols\0"#
+    313# -> "\112\250\1\0\255\250\1\0Symbols and Pictographs Extended-A\0"#
+    314# -> "\0\251\1\0\255\251\1\0Symbols for Legacy Computing\0"#
+    315# -> "\0\0\2\0\223\166\2\0CJK Unified Ideographs Extension B\0"#
+    316# -> "\0\167\2\0\63\183\2\0CJK Unified Ideographs Extension C\0"#
+    317# -> "\64\183\2\0\31\184\2\0CJK Unified Ideographs Extension D\0"#
+    318# -> "\32\184\2\0\175\206\2\0CJK Unified Ideographs Extension E\0"#
+    319# -> "\176\206\2\0\239\235\2\0CJK Unified Ideographs Extension F\0"#
+    320# -> "\0\248\2\0\31\250\2\0CJK Compatibility Ideographs Supplement\0"#
+    321# -> "\0\0\3\0\79\19\3\0CJK Unified Ideographs Extension G\0"#
+    322# -> "\80\19\3\0\175\35\3\0CJK Unified Ideographs Extension H\0"#
+    323# -> "\0\0\14\0\127\0\14\0Tags\0"#
+    324# -> "\0\1\14\0\239\1\14\0Variation Selectors Supplement\0"#
+    325# -> "\0\0\15\0\255\255\15\0Supplementary Private Use Area-A\0"#
+    326# -> "\0\0\16\0\255\255\16\0Supplementary Private Use Area-B\0"#
+    _    -> "\0"#
+
+-- | Character block, if defined, else -1.
+--
+-- @since 0.3.1
+block :: Char# -> Int#
+block c# = getBlock 0# 326#
     where
     -- [NOTE] Encoding
     -- A range is encoded as two LE Word32:
@@ -712,7 +711,7 @@ block (C# c#) = getBlock 0# 326#
 
     -- Binary search
     getBlock l# u# = if isTrue# (l# ># u#)
-        then Nothing
+        then -1#
         else
             let k# = l# +# uncheckedIShiftRL# (u# -# l#) 1#
                 j# = k# `uncheckedIShiftL#` 1#
@@ -728,7 +727,7 @@ block (C# c#) = getBlock 0# 326#
                     then getBlock l# (k# -# 1#)
                     -- cp in block: get block index
                     else let block# = cpL0# `uncheckedShiftRL#` 21#
-                         in Just (I# (word2Int# block#))
+                         in word2Int# block#
 
     getRawCodePoint# = lookupWord32# ranges#
 

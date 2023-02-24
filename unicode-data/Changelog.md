@@ -4,12 +4,6 @@
 
 ### Breaking changes
 
-- The constructor of `BlockDefinition` has changed and is not exposed anymore
-  in `Unicode.Char.General.Block`. Instead the pattern synonym `BlockDefinition`
-  is provided with read-only field accessors.
-
-  __Migration:__ import the module `Unicode.Char.General.Block` qualified or
-  explicitly import pattern and field accessors.
 - The return type of `integerValue` has changed from `Maybe Int` to
   `(Integral a) => Maybe a`, in order to deal with possible overflow.
 

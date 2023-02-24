@@ -1,5 +1,6 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 -- |
 -- Module      : Unicode.Char.General.Blocks
@@ -17,19 +18,16 @@ module Unicode.Char.General.Blocks
       B.Block(..)
     , block
       -- * Blocks definitions
-    , B.BlockDefinition()
-    , pattern BlockDefinition
-    , blockRange
-    , blockName
-    , B.blockDefinition
+    , BlockDefinition(..)
+    , blockDefinition
     )
 
 where
 
-import Foreign.C.String (CString)
-import GHC.Exts (Ptr(..))
+import GHC.Exts (Char(..), Int(..), tagToEnum#, dataToTag#, plusAddr#)
+import GHC.Generics (Generic)
 
-import Unicode.Internal.Bits (unpackCString#)
+import Unicode.Internal.Bits (unpackCString#, lookupInt32#)
 import qualified Unicode.Internal.Char.Blocks as B
 
 -- | Character [block](https://www.unicode.org/glossary/#block), if defined.
@@ -37,23 +35,24 @@ import qualified Unicode.Internal.Char.Blocks as B
 -- @since 0.3.1
 {-# INLINE block #-}
 block :: Char -> Maybe B.Block
-block = fmap toEnum . B.block
+block (C# c#) = case B.block c# of
+    -1# -> Nothing
+    b#  -> Just (tagToEnum# b#)
 
--- | Definition of a Unicode block: range and name.
+-- | Block definition: range of characters and name.
 --
--- @since 0.4.1
-pattern BlockDefinition :: (Int, Int) -> String -> B.BlockDefinition
-pattern BlockDefinition{blockRange, blockName} <-
-    B.BlockDefinition blockRange (unpack -> blockName)
-{-# COMPLETE BlockDefinition :: B.BlockDefinition #-}
+-- @since 0.3.1
+data BlockDefinition = BlockDefinition
+    { blockRange :: !(Int, Int) -- ^ Range
+    , blockName  :: !String     -- ^ Name
+    } deriving (Generic, Eq, Ord, Show)
 
--- | Range of characters of a block.
-blockRange :: B.BlockDefinition -> (Int, Int)
-
--- | Name of a block.
-blockName :: B.BlockDefinition -> String
-
--- Note: names are ASCII. See Unicode Standard 15.0.0, section 3.4.
-{-# INLINE unpack #-}
-unpack :: CString -> String
-unpack (Ptr addr#) = unpackCString# addr#
+blockDefinition :: B.Block -> BlockDefinition
+blockDefinition b = BlockDefinition (lower, upper) name
+    where
+    b# = dataToTag# b
+    addr# = B.blockDefinition b#
+    lower = I# (lookupInt32# addr# 0#)
+    upper = I# (lookupInt32# addr# 1#)
+    -- Note: names are ASCII. See Unicode Standard 15.0.0, section 3.4.
+    name = unpackCString# (addr# `plusAddr#` 8#)
