@@ -1723,9 +1723,9 @@ genNumericValuesModule moduleName =
         , "(numericValue)"
         , "where"
         , ""
-        , "{-# NOINLINE numericValue #-}"
         , "import Data.Ratio ((%))"
         , ""
+        , "{-# NOINLINE numericValue #-}"
         , "numericValue :: Char -> Maybe Rational"
         , "numericValue = \\case" <> values
         , "  _ -> Nothing"
