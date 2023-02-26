@@ -12,9 +12,8 @@ module Unicode.Internal.Char.UnicodeData.Compositions
 (compose, composeStarters, isSecondStarter)
 where
 
-import Data.Char (ord)
 import Data.Word (Word8)
-import GHC.Exts (Ptr(..))
+import GHC.Exts (Char#, Int#, Ptr(..), (<=#), (>=#), andI#, ord#)
 import Unicode.Internal.Bits (lookupBit64)
 
 {-# NOINLINE compose #-}
@@ -1011,9 +1010,10 @@ composeStarters _ _ = Nothing
 
 
 {-# INLINE isSecondStarter #-}
-isSecondStarter :: Char -> Bool
-isSecondStarter = \c -> let !cp = ord c in cp >= 0x09BE && cp <= 0x11930 && lookupBit64 bitmap# cp
+isSecondStarter :: Char# -> Int#
+isSecondStarter c# = (cp# >=# 0x09BE#) `andI#` (cp# <=# 0x11930#) `andI#` lookupBit64 bitmap# cp#
     where
+    !cp# = ord# c#
     !(Ptr bitmap#) = isSecondStarterBitmap
 
 isSecondStarterBitmap :: Ptr Word8

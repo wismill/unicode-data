@@ -13,15 +13,15 @@ module Unicode.Internal.Char.Security.IdentifierStatus
 (isAllowedInIdentifier)
 where
 
-import Data.Char (ord)
 import Data.Word (Word8)
-import GHC.Exts (Ptr(..))
+import GHC.Exts (Char#, Int#, Ptr(..), (<=#), (>=#), andI#, ord#)
 import Unicode.Internal.Bits (lookupBit64)
 
 {-# INLINE isAllowedInIdentifier #-}
-isAllowedInIdentifier :: Char -> Bool
-isAllowedInIdentifier = \c -> let !cp = ord c in cp >= 0x0027 && cp <= 0x323AF && lookupBit64 bitmap# cp
+isAllowedInIdentifier :: Char# -> Int#
+isAllowedInIdentifier c# = (cp# >=# 0x0027#) `andI#` (cp# <=# 0x323AF#) `andI#` lookupBit64 bitmap# cp#
     where
+    !cp# = ord# c#
     !(Ptr bitmap#) = isAllowedInIdentifierBitmap
 
 isAllowedInIdentifierBitmap :: Ptr Word8

@@ -90,18 +90,18 @@ decodeIdentifierTypes = \case
 
 -- | Returns the 'IdentifierType's corresponding to a character.
 {-# INLINE identifierTypes #-}
-identifierTypes :: Char -> Int
-identifierTypes c
+identifierTypes :: Char# -> Int#
+identifierTypes c#
     -- Planes 0-3
-    | cp < 0x323B0 = lookupIntN bitmap# cp
+    | isTrue# (cp# <# 0x323B0#) = lookupIntN bitmap# cp#
     -- Planes 4-13: 0
-    | cp < 0xE0000 = 0
+    | isTrue# (cp# <# 0xE0000#) = 0
     -- Plane 14
-    | cp < 0xE01F0 = lookupIntN bitmap# (cp - 0xADC50)
+    | isTrue# (cp# <# 0xE01F0#) = lookupIntN bitmap# (cp# -# 0xADC50#)
     -- Default: 0
     | otherwise = 0
     where
-    !cp = ord c
+    !cp# = ord# c#
     !(Ptr bitmap#) = identifierTypesBitmap
 
 identifierTypesBitmap :: Ptr Word8

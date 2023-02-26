@@ -55,6 +55,7 @@ where
 import Control.Exception (assert)
 import Data.Char (ord)
 import GHC.Base (unsafeChr)
+import GHC.Exts (Char(..), isTrue#)
 import Unicode.Internal.Division (quotRem21, quotRem28)
 import Unicode.Char.General
     (hangulFirst, jamoLFirst, jamoTCount, jamoTFirst, jamoVCount, jamoVFirst)
@@ -93,7 +94,7 @@ composeStarters = C.composeStarters
 -- @since 0.1.0
 {-# INLINE isCombiningStarter #-}
 isCombiningStarter :: Char -> Bool
-isCombiningStarter = C.isSecondStarter
+isCombiningStarter (C# c) = isTrue# (C.isSecondStarter c)
 
 -------------------------------------------------------------------------------
 -- Decompose
@@ -124,8 +125,9 @@ decompose Kompat = K.decompose
 -- @since 0.1.0
 {-# INLINE isDecomposable #-}
 isDecomposable :: DecomposeMode -> Char -> Bool
-isDecomposable Canonical  = D.isDecomposable
-isDecomposable Kompat = K.isDecomposable
+isDecomposable mode (C# c) = isTrue# (case mode of
+    Canonical -> D.isDecomposable c
+    Kompat    -> K.isDecomposable c)
 
 -------------------------------------------------------------------------------
 -- Hangul decomposition
@@ -165,4 +167,4 @@ combiningClass = CC.combiningClass
 -- @since 0.1.0
 {-# INLINE isCombining #-}
 isCombining :: Char -> Bool
-isCombining = CC.isCombining
+isCombining (C# c) = isTrue# (CC.isCombining c)

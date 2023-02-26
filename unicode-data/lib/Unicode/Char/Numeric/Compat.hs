@@ -14,7 +14,7 @@ module Unicode.Char.Numeric.Compat
       isNumber
     ) where
 
-import Data.Char (ord)
+import GHC.Exts (Char(..), andI#, isTrue#, ord#, (<=#))
 import qualified Unicode.Internal.Char.UnicodeData.GeneralCategory as UC
 
 -- | Selects Unicode numeric characters, including digits from various
@@ -39,13 +39,13 @@ import qualified Unicode.Internal.Char.UnicodeData.GeneralCategory as UC
 --
 -- @since 0.3.0
 isNumber :: Char -> Bool
-isNumber c =
+isNumber (C# c) = isTrue# (
     -- NOTE: The guard constant is updated at each Unicode revision.
     --       It must be < 0x40000 to be accepted by generalCategoryPlanes0To3.
-    cp <= UC.MaxIsNumber &&
+    (cp <=# UC.MaxIsNumber) `andI#`
     case UC.generalCategoryPlanes0To3 cp of
-        UC.DecimalNumber -> True
-        UC.LetterNumber  -> True
-        UC.OtherNumber   -> True
-        _                -> False
-    where cp = ord c
+        UC.DecimalNumber -> 1#
+        UC.LetterNumber  -> 1#
+        UC.OtherNumber   -> 1#
+        _                -> 0#)
+    where !cp = ord# c

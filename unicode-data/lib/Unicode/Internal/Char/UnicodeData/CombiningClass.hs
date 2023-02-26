@@ -12,9 +12,8 @@ module Unicode.Internal.Char.UnicodeData.CombiningClass
 (combiningClass, isCombining)
 where
 
-import Data.Char (ord)
 import Data.Word (Word8)
-import GHC.Exts (Ptr(..))
+import GHC.Exts (Char#, Int#, Ptr(..), (<=#), (>=#), andI#, ord#)
 import Unicode.Internal.Bits (lookupBit64)
 
 combiningClass :: Char -> Int
@@ -946,9 +945,10 @@ combiningClass = \case
 
 
 {-# INLINE isCombining #-}
-isCombining :: Char -> Bool
-isCombining = \c -> let !cp = ord c in cp >= 0x0300 && cp <= 0x1E94A && lookupBit64 bitmap# cp
+isCombining :: Char# -> Int#
+isCombining c# = (cp# >=# 0x0300#) `andI#` (cp# <=# 0x1E94A#) `andI#` lookupBit64 bitmap# cp#
     where
+    !cp# = ord# c#
     !(Ptr bitmap#) = isCombiningBitmap
 
 isCombiningBitmap :: Ptr Word8

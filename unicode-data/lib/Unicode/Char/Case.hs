@@ -46,6 +46,7 @@ where
 import Data.Bits (Bits(..))
 import Data.Int (Int64)
 import GHC.Base (unsafeChr)
+import GHC.Exts (Char(..), isTrue#)
 
 import Unicode.Internal.Unfold
 import qualified Unicode.Internal.Char.CaseFolding as C
@@ -62,7 +63,7 @@ import qualified Unicode.Internal.Char.SpecialCasing.UpperCaseMapping as C
 -- @since 0.3.0
 {-# INLINE isLowerCase #-}
 isLowerCase :: Char -> Bool
-isLowerCase = P.isLowercase
+isLowerCase (C# c#) = isTrue# (P.isLowercase c#)
 
 -- | Returns 'True' for lower-case characters.
 --
@@ -73,7 +74,7 @@ isLowerCase = P.isLowercase
 {-# INLINE isLower #-}
 {-# DEPRECATED isLower "Use isLowerCase instead. Note that the behavior of this function does not match base:Data.Char.isLower. See Unicode.Char.Case.Compat for behavior compatible with base:Data.Char." #-}
 isLower :: Char -> Bool
-isLower = P.isLowercase
+isLower (C# c#) = isTrue# (P.isLowercase c#)
 
 -- | Returns 'True' for upper-case characters.
 --
@@ -87,7 +88,7 @@ isLower = P.isLowercase
 -- @since 0.3.0
 {-# INLINE isUpperCase #-}
 isUpperCase :: Char -> Bool
-isUpperCase = P.isUppercase
+isUpperCase (C# c#) = isTrue# (P.isUppercase c#)
 
 -- | Returns 'True' for upper-case characters.
 --
@@ -102,7 +103,7 @@ isUpperCase = P.isUppercase
 {-# INLINE isUpper #-}
 {-# DEPRECATED isUpper "Use isUpperCase instead. Note that the behavior of this function does not match base:Data.Char.isUpper. See Unicode.Char.Case.Compat for behavior compatible with base:Data.Char." #-}
 isUpper :: Char -> Bool
-isUpper = P.isUppercase
+isUpper (C# c#) = isTrue# (P.isUppercase c#)
 
 -- $case
 --

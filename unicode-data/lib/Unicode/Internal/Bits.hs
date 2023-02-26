@@ -27,10 +27,10 @@ module Unicode.Internal.Bits
 
 import Data.Bits (finiteBitSize, popCount)
 import GHC.Exts
-       (Addr#, Int(..), Int#, Word(..), Word#,
+       (Addr#, Int(..), Int#, Word#,
         indexWordOffAddr#, indexWord8OffAddr#, indexWord32OffAddr#,
         andI#, uncheckedIShiftRL#,
-        and#, word2Int#, uncheckedShiftL#)
+        and#, word2Int#, uncheckedShiftL#, neWord#)
 
 #if MIN_VERSION_base(4,15,0)
 import GHC.Exts (unpackCString#)
@@ -56,8 +56,8 @@ import GHC.Exts (indexInt32OffAddr#)
 -- 64-bit word at the byte address (addr + index / 64) * 8 is legally
 -- accessible memory.
 --
-lookupBit64 :: Addr# -> Int -> Bool
-lookupBit64 addr# (I# index#) = W# (word## `and#` bitMask##) /= 0
+lookupBit64 :: Addr# -> Int# -> Int#
+lookupBit64 addr# index# = (word## `and#` bitMask##) `neWord#` 0##
   where
     !fbs@(I# fbs#) = finiteBitSize (0 :: Word) - 1
     !(I# logFbs#) = case fbs of
@@ -85,9 +85,9 @@ The caller must make sure that:
 -}
 lookupIntN
   :: Addr# -- ^ Bitmap address
-  -> Int   -- ^ Word index
-  -> Int   -- ^ Resulting word as 'Int'
-lookupIntN addr# (I# index#) = I# (word2Int# word##)
+  -> Int#  -- ^ Word index
+  -> Int#  -- ^ Resulting word as 'Int'
+lookupIntN addr# index# = word2Int# word##
   where
 #if MIN_VERSION_base(4,16,0)
     word## = word8ToWord# (indexWord8OffAddr# addr# index#)

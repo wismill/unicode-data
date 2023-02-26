@@ -246,18 +246,18 @@ decodeScriptExtensions = \case
 --
 -- @since 0.1.0
 {-# INLINE scriptExtensions #-}
-scriptExtensions :: Char -> Int
-scriptExtensions c
+scriptExtensions :: Char# -> Int#
+scriptExtensions c#
     -- Planes 0-3
-    | cp < 0x323B0 = lookupIntN bitmap# cp
+    | isTrue# (cp# <# 0x323B0#) = lookupIntN bitmap# cp#
     -- Planes 4-13: 211
-    | cp < 0xE0000 = 211
+    | isTrue# (cp# <# 0xE0000#) = 211
     -- Plane 14
-    | cp < 0xE01F0 = lookupIntN bitmap# (cp - 0xADC50)
+    | isTrue# (cp# <# 0xE01F0#) = lookupIntN bitmap# (cp# -# 0xADC50#)
     -- Default: 211
     | otherwise = 211
     where
-    !cp = ord c
+    !cp# = ord# c#
     !(Ptr bitmap#) = scriptExtensionsBitmap
 
 scriptExtensionsBitmap :: Ptr Word8

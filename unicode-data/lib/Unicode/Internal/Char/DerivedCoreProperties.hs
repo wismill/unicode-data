@@ -12,21 +12,15 @@ module Unicode.Internal.Char.DerivedCoreProperties
 (isXID_Continue , isXID_Start , isID_Continue , isID_Start , isUppercase , isLowercase , isAlphabetic)
 where
 
-import Data.Char (ord)
 import Data.Word (Word8)
-import GHC.Exts (Ptr(..))
+import GHC.Exts (Char#, Int#, Ptr(..), (<=#), (>=#), (-#), andI#, orI#, ord#)
 import Unicode.Internal.Bits (lookupBit64)
 
 {-# INLINE isXID_Continue #-}
-isXID_Continue :: Char -> Bool
-isXID_Continue c
-    | cp < 0x002F = False
-    | cp < 0x323B0 = lookupBit64 bitmap# cp
-    | cp < 0xE0000 = False
-    | cp < 0xE01F0 = lookupBit64 bitmap# (cp - 0xADC50)
-    | otherwise = False
+isXID_Continue :: Char# -> Int#
+isXID_Continue c# = (cp# >=# 0x002E#) `andI#` ((cp# <=# 0x323AF#) `andI#` lookupBit64 bitmap# cp#) `orI#` ((cp# >=# 0xE0000#) `andI#` (cp# <=# 0xE01EF#) `andI#` lookupBit64 bitmap# (cp# -# 0xADC50#))
     where
-    !cp = ord c
+    !cp# = ord# c#
     !(Ptr bitmap#) = isXID_ContinueBitmap
 
 isXID_ContinueBitmap :: Ptr Word8
@@ -135,9 +129,10 @@ isXID_ContinueBitmap = Ptr
     \\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255"#
 
 {-# INLINE isXID_Start #-}
-isXID_Start :: Char -> Bool
-isXID_Start = \c -> let !cp = ord c in cp >= 0x0041 && cp <= 0x323AF && lookupBit64 bitmap# cp
+isXID_Start :: Char# -> Int#
+isXID_Start c# = (cp# >=# 0x0041#) `andI#` (cp# <=# 0x323AF#) `andI#` lookupBit64 bitmap# cp#
     where
+    !cp# = ord# c#
     !(Ptr bitmap#) = isXID_StartBitmap
 
 isXID_StartBitmap :: Ptr Word8
@@ -245,15 +240,10 @@ isXID_StartBitmap = Ptr
     \\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255"#
 
 {-# INLINE isID_Continue #-}
-isID_Continue :: Char -> Bool
-isID_Continue c
-    | cp < 0x002F = False
-    | cp < 0x323B0 = lookupBit64 bitmap# cp
-    | cp < 0xE0000 = False
-    | cp < 0xE01F0 = lookupBit64 bitmap# (cp - 0xADC50)
-    | otherwise = False
+isID_Continue :: Char# -> Int#
+isID_Continue c# = (cp# >=# 0x002E#) `andI#` ((cp# <=# 0x323AF#) `andI#` lookupBit64 bitmap# cp#) `orI#` ((cp# >=# 0xE0000#) `andI#` (cp# <=# 0xE01EF#) `andI#` lookupBit64 bitmap# (cp# -# 0xADC50#))
     where
-    !cp = ord c
+    !cp# = ord# c#
     !(Ptr bitmap#) = isID_ContinueBitmap
 
 isID_ContinueBitmap :: Ptr Word8
@@ -362,9 +352,10 @@ isID_ContinueBitmap = Ptr
     \\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255"#
 
 {-# INLINE isID_Start #-}
-isID_Start :: Char -> Bool
-isID_Start = \c -> let !cp = ord c in cp >= 0x0041 && cp <= 0x323AF && lookupBit64 bitmap# cp
+isID_Start :: Char# -> Int#
+isID_Start c# = (cp# >=# 0x0041#) `andI#` (cp# <=# 0x323AF#) `andI#` lookupBit64 bitmap# cp#
     where
+    !cp# = ord# c#
     !(Ptr bitmap#) = isID_StartBitmap
 
 isID_StartBitmap :: Ptr Word8
@@ -472,9 +463,10 @@ isID_StartBitmap = Ptr
     \\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255"#
 
 {-# INLINE isUppercase #-}
-isUppercase :: Char -> Bool
-isUppercase = \c -> let !cp = ord c in cp >= 0x0041 && cp <= 0x1F189 && lookupBit64 bitmap# cp
+isUppercase :: Char# -> Int#
+isUppercase c# = (cp# >=# 0x0041#) `andI#` (cp# <=# 0x1F189#) `andI#` lookupBit64 bitmap# cp#
     where
+    !cp# = ord# c#
     !(Ptr bitmap#) = isUppercaseBitmap
 
 isUppercaseBitmap :: Ptr Word8
@@ -544,9 +536,10 @@ isUppercaseBitmap = Ptr
     \\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\255\255\255\3\255\255\255\3\255\255\255\3"#
 
 {-# INLINE isLowercase #-}
-isLowercase :: Char -> Bool
-isLowercase = \c -> let !cp = ord c in cp >= 0x0061 && cp <= 0x1E943 && lookupBit64 bitmap# cp
+isLowercase :: Char# -> Int#
+isLowercase c# = (cp# >=# 0x0061#) `andI#` (cp# <=# 0x1E943#) `andI#` lookupBit64 bitmap# cp#
     where
+    !cp# = ord# c#
     !(Ptr bitmap#) = isLowercaseBitmap
 
 isLowercaseBitmap :: Ptr Word8
@@ -615,9 +608,10 @@ isLowercaseBitmap = Ptr
     \\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\252\255\255\255\15"#
 
 {-# INLINE isAlphabetic #-}
-isAlphabetic :: Char -> Bool
-isAlphabetic = \c -> let !cp = ord c in cp >= 0x0041 && cp <= 0x323AF && lookupBit64 bitmap# cp
+isAlphabetic :: Char# -> Int#
+isAlphabetic c# = (cp# >=# 0x0041#) `andI#` (cp# <=# 0x323AF#) `andI#` lookupBit64 bitmap# cp#
     where
+    !cp# = ord# c#
     !(Ptr bitmap#) = isAlphabeticBitmap
 
 isAlphabeticBitmap :: Ptr Word8

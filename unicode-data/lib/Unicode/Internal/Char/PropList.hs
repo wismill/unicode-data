@@ -12,15 +12,15 @@ module Unicode.Internal.Char.PropList
 (isPattern_Syntax , isPattern_White_Space , isWhite_Space)
 where
 
-import Data.Char (ord)
 import Data.Word (Word8)
-import GHC.Exts (Ptr(..))
+import GHC.Exts (Char#, Int#, Ptr(..), (<=#), (>=#), (-#), andI#, orI#, ord#)
 import Unicode.Internal.Bits (lookupBit64)
 
 {-# INLINE isPattern_Syntax #-}
-isPattern_Syntax :: Char -> Bool
-isPattern_Syntax = \c -> let !cp = ord c in cp >= 0x0021 && cp <= 0xFE46 && lookupBit64 bitmap# cp
+isPattern_Syntax :: Char# -> Int#
+isPattern_Syntax c# = (cp# >=# 0x0021#) `andI#` (cp# <=# 0xFE46#) `andI#` lookupBit64 bitmap# cp#
     where
+    !cp# = ord# c#
     !(Ptr bitmap#) = isPattern_SyntaxBitmap
 
 isPattern_SyntaxBitmap :: Ptr Word8
@@ -59,9 +59,10 @@ isPattern_SyntaxBitmap = Ptr
     \\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\192\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\96"#
 
 {-# INLINE isPattern_White_Space #-}
-isPattern_White_Space :: Char -> Bool
-isPattern_White_Space = \c -> let !cp = ord c in cp >= 0x0009 && cp <= 0x2029 && lookupBit64 bitmap# cp
+isPattern_White_Space :: Char# -> Int#
+isPattern_White_Space c# = (cp# >=# 0x0009#) `andI#` (cp# <=# 0x2029#) `andI#` lookupBit64 bitmap# cp#
     where
+    !cp# = ord# c#
     !(Ptr bitmap#) = isPattern_White_SpaceBitmap
 
 isPattern_White_SpaceBitmap :: Ptr Word8
@@ -73,9 +74,10 @@ isPattern_White_SpaceBitmap = Ptr
     \\0\0\0\0\0\192\0\0\0\3"#
 
 {-# INLINE isWhite_Space #-}
-isWhite_Space :: Char -> Bool
-isWhite_Space = \c -> let !cp = ord c in cp >= 0x0009 && cp <= 0x3000 && lookupBit64 bitmap# cp
+isWhite_Space :: Char# -> Int#
+isWhite_Space c# = (cp# >=# 0x0009#) `andI#` (cp# <=# 0x3000#) `andI#` lookupBit64 bitmap# cp#
     where
+    !cp# = ord# c#
     !(Ptr bitmap#) = isWhite_SpaceBitmap
 
 isWhite_SpaceBitmap :: Ptr Word8

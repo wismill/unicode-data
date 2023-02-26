@@ -368,18 +368,18 @@ scriptDefinition b = case b of
 --
 -- @since 0.1.0
 {-# INLINE script #-}
-script :: Char -> Int
-script c
+script :: Char# -> Int#
+script c#
     -- Planes 0-3
-    | cp < 0x323B0 = lookupIntN bitmap# cp
+    | isTrue# (cp# <# 0x323B0#) = lookupIntN bitmap# cp#
     -- Planes 4-13: 156
-    | cp < 0xE0000 = 156
+    | isTrue# (cp# <# 0xE0000#) = 156
     -- Plane 14
-    | cp < 0xE01F0 = lookupIntN bitmap# (cp - 0xADC50)
+    | isTrue# (cp# <# 0xE01F0#) = lookupIntN bitmap# (cp# -# 0xADC50#)
     -- Default: 156
     | otherwise = 156
     where
-    !cp = ord c
+    !cp# = ord# c#
     !(Ptr bitmap#) = scriptBitmap
 
 scriptBitmap :: Ptr Word8

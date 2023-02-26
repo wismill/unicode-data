@@ -18,6 +18,8 @@ module Unicode.Char.Identifiers
     )
 where
 
+import GHC.Exts (Char(..), isTrue#)
+
 import qualified Unicode.Internal.Char.DerivedCoreProperties as P
 import qualified Unicode.Internal.Char.PropList as P
 
@@ -26,14 +28,14 @@ import qualified Unicode.Internal.Char.PropList as P
 -- @since 0.2.0
 {-# INLINE isIDContinue #-}
 isIDContinue :: Char -> Bool
-isIDContinue = P.isID_Continue
+isIDContinue (C# c#) = isTrue# (P.isID_Continue c#)
 
 -- | Returns 'True' if a character is an identifier start character.
 --
 -- @since 0.2.0
 {-# INLINE isIDStart #-}
 isIDStart :: Char -> Bool
-isIDStart = P.isID_Start
+isIDStart (C# c#) = isTrue# (P.isID_Start c#)
 
 -- | Returns 'True' if a character is an identifier continue character,
 -- using the NFKC modifications detailed in
@@ -42,7 +44,7 @@ isIDStart = P.isID_Start
 -- @since 0.2.0
 {-# INLINE isXIDContinue #-}
 isXIDContinue :: Char -> Bool
-isXIDContinue = P.isXID_Continue
+isXIDContinue (C# c#) = isTrue# (P.isXID_Continue c#)
 
 
 -- | Returns 'True' if a character is an identifier start character,
@@ -52,18 +54,18 @@ isXIDContinue = P.isXID_Continue
 -- @since 0.2.0
 {-# INLINE isXIDStart #-}
 isXIDStart :: Char -> Bool
-isXIDStart = P.isXID_Start
+isXIDStart (C# c#)= isTrue# (P.isXID_Start c#)
 
 -- | Returns 'True' if a character is a pattern syntax character.
 --
 -- @since 0.2.0
 {-# INLINE isPatternSyntax #-}
 isPatternSyntax :: Char -> Bool
-isPatternSyntax = P.isPattern_Syntax
+isPatternSyntax (C# c#) = isTrue# (P.isPattern_Syntax c#)
 
 -- | Returns 'True' if a character is a pattern whitespace character.
 --
 -- @since 0.2.0
 {-# INLINE isPatternWhitespace #-}
 isPatternWhitespace :: Char -> Bool
-isPatternWhitespace = P.isPattern_White_Space
+isPatternWhitespace (C# c#) = isTrue# (P.isPattern_White_Space c#)

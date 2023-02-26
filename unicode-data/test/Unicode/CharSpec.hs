@@ -21,6 +21,7 @@ import qualified Unicode.Char.Numeric as UNumeric
 import qualified Unicode.Char.Numeric.Compat as UNumericCompat
 import qualified Unicode.Internal.Char.UnicodeData.GeneralCategory as UC
 import Data.Foldable (traverse_)
+import GHC.Exts (Int(..))
 import Test.Hspec
 
 {- [NOTE]
@@ -102,8 +103,8 @@ spec = do
                         UChar.OtherNumber     -> True
                         _                     -> False
       it "Check max codepoint for isAlphaNum" do
-        Char.chr UC.MaxIsAlphaNum `shouldBe` maxCodePointBy isAlphaNumRef
-        UC.MaxIsAlphaNum `shouldSatisfy` isPlane0To3
+        Char.chr (I# UC.MaxIsAlphaNum) `shouldBe` maxCodePointBy isAlphaNumRef
+        I# UC.MaxIsAlphaNum `shouldSatisfy` isPlane0To3
       it "Compare to base" do
         UChar.isAlphaNum `shouldBeEqualTo` Char.isAlphaNum
     it "isControl" do
@@ -117,8 +118,8 @@ spec = do
                         UChar.OtherLetter     -> True
                         _                     -> False
       it "Check max codepoint for isLetterRef" do
-        Char.chr UC.MaxIsLetter `shouldBe` maxCodePointBy isLetterRef
-        UC.MaxIsLetter `shouldSatisfy` isPlane0To3
+        Char.chr (I# UC.MaxIsLetter) `shouldBe` maxCodePointBy isLetterRef
+        I# UC.MaxIsLetter `shouldSatisfy` isPlane0To3
       it "Compare to base" do
         UCharCompat.isLetter `shouldBeEqualTo` Char.isLetter
     it "isMark" do
@@ -134,15 +135,15 @@ spec = do
                             UChar.LineSeparator      -> True
                             UChar.ParagraphSeparator -> True
                             _                        -> False
-        Char.chr UC.MaxIsSeparator `shouldBe` maxCodePointBy isSeparatorRef
-        UC.MaxIsSeparator `shouldSatisfy` isPlane0To3
+        Char.chr (I# UC.MaxIsSeparator) `shouldBe` maxCodePointBy isSeparatorRef
+        I# UC.MaxIsSeparator `shouldSatisfy` isPlane0To3
       it "Compare to base" do
         UChar.isSeparator `shouldBeEqualTo` Char.isSeparator
     describe "isSpace" do
       it "Check max codepoint for Space" do
         let isSpaceRef = (== UChar.Space)
-        Char.chr UC.MaxIsSpace `shouldBe` maxCodePointBy isSpaceRef
-        UC.MaxIsSpace `shouldSatisfy` isPlane0To3
+        Char.chr (I# UC.MaxIsSpace) `shouldBe` maxCodePointBy isSpaceRef
+        I# UC.MaxIsSpace `shouldSatisfy` isPlane0To3
       it "Compare to base" do
         UCharCompat.isSpace `shouldBeEqualTo` Char.isSpace
     it "isSymbol" do
@@ -151,8 +152,8 @@ spec = do
     describe "isLower" do
       it "Check max codepoint for lower" do
         let isLowerRef = (== UChar.LowercaseLetter)
-        Char.chr UC.MaxIsLower `shouldBe` maxCodePointBy isLowerRef
-        UC.MaxIsLower `shouldSatisfy` isPlane0To3
+        Char.chr (I# UC.MaxIsLower) `shouldBe` maxCodePointBy isLowerRef
+        I# UC.MaxIsLower `shouldSatisfy` isPlane0To3
       it' "Compare to base" do
           UCharCompat.isLower `shouldBeEqualTo` Char.isLower
 #if MIN_VERSION_base(4,18,0)
@@ -165,8 +166,8 @@ spec = do
                             UChar.UppercaseLetter -> True
                             UChar.TitlecaseLetter -> True
                             _                     -> False
-        Char.chr UC.MaxIsUpper `shouldBe` maxCodePointBy isUpperRef
-        UC.MaxIsUpper `shouldSatisfy` isPlane0To3
+        Char.chr (I# UC.MaxIsUpper) `shouldBe` maxCodePointBy isUpperRef
+        I# UC.MaxIsUpper `shouldSatisfy` isPlane0To3
       it' "Compare to base" do
         UCharCompat.isUpper `shouldBeEqualTo` Char.isUpper
 #if MIN_VERSION_base(4,18,0)
@@ -254,8 +255,8 @@ spec = do
                             UChar.LetterNumber  -> True
                             UChar.OtherNumber   -> True
                             _                   -> False
-        Char.chr UC.MaxIsNumber `shouldBe` maxCodePointBy isNumber
-        UC.MaxIsNumber `shouldSatisfy` isPlane0To3
+        Char.chr (I# UC.MaxIsNumber) `shouldBe` maxCodePointBy isNumber
+        I# UC.MaxIsNumber `shouldSatisfy` isPlane0To3
       it' "Compare to base" do
         UNumericCompat.isNumber `shouldBeEqualTo` Char.isNumber
     it "isNumber implies a numeric value" do

@@ -191,8 +191,10 @@ generalCategoryConstructor = \case
 genBitmap :: HasCallStack => String -> [Int] -> String
 genBitmap funcName ordList = mconcat
     [ "{-# INLINE " <> funcName <> " #-}\n"
-    , funcName, " :: Char -> Bool\n"
+    , funcName, " :: Char# -> Int#\n"
     , funcName, func
+    , "    where\n"
+    , "    !cp# = ord# c#\n"
     , "    !(Ptr bitmap#) = ", bitmapLookup, "\n\n"
     , bitmapLookup, " :: Ptr Word8\n"
     , bitmapLookup, " = Ptr\n"
@@ -200,16 +202,15 @@ genBitmap funcName ordList = mconcat
     where
     rawBitmap = positionsToBitMap ordList
     bitmapLookup = funcName <> "Bitmap"
-    (func, bitmap) = if length rawBitmap <= 0x40000
+    (func, bitmap) = if maximum ordList < 0x40000
         -- Only planes 0-3
         then
             ( mconcat
-                [ " = \\c -> let !cp = ord c in cp >= 0x"
+                [ " c# = (cp# >=# 0x"
                 , showPaddedHeX (minimum ordList)
-                , " && cp <= 0x"
+                , "#) `andI#` (cp# <=# 0x"
                 , showPaddedHeX (maximum ordList)
-                , " && lookupBit64 bitmap# cp\n"
-                , "    where\n" ]
+                , "#) `andI#` lookupBit64 bitmap# cp#\n" ]
             , rawBitmap )
         -- Planes 0-3 and 14
         else
@@ -218,23 +219,20 @@ genBitmap funcName ordList = mconcat
                 bound1 = length planes0To3
                 bound2 = 0xE0000 + length plane14
             in ( mconcat
-                    [ " c\n"
+                    [ " c# = "
                     , if bound0 > 0
                         then mconcat
-                            [ "    | cp < 0x"
-                            , showPaddedHeX bound0
-                            , " = False\n" ]
+                            [ "(cp# >=# 0x"
+                            , showPaddedHeX (pred bound0)
+                            , "#) `andI#` " ]
                         else ""
-                    , "    | cp < 0x", showPaddedHeX bound1
-                    , " = lookupBit64 bitmap# cp\n"
-                    , "    | cp < 0xE0000 = False\n"
-                    , "    | cp < 0x", showPaddedHeX bound2
-                    , " = lookupBit64 bitmap# (cp - 0x"
-                    , showPaddedHeX (0xE0000 - bound1)
-                    , ")\n"
-                    , "    | otherwise = False\n"
-                    , "    where\n"
-                    , "    !cp = ord c\n" ]
+                    , "((cp# <=# 0x", showPaddedHeX (pred bound1)
+                    , "#) `andI#` lookupBit64 bitmap# cp#)"
+                    , " `orI#` "
+                    , "((cp# >=# 0xE0000#) `andI#` "
+                    , "(cp# <=# 0x", showPaddedHeX (pred bound2), "#) `andI#` "
+                    , "lookupBit64 bitmap# (cp# -# 0x"
+                    , showPaddedHeX (0xE0000 - bound1), "#))\n" ]
                 , planes0To3 <> plane14 )
 
 positionsToBitMap :: [Int] -> [Bool]
@@ -289,7 +287,7 @@ genEnumBitmap
   -> String
 genEnumBitmap funcName (defPUA, pPUA) (def, pDef) planes0To3 plane14 = mconcat
     [ "{-# INLINE ", funcName, " #-}\n"
-    , funcName, " :: Char -> Int\n"
+    , funcName, " :: Char# -> Int#\n"
     , funcName, func
     , "    !(Ptr bitmap#) = ", bitmapLookup, "\n\n"
     , bitmapLookup, " :: Ptr Word8\n"
@@ -306,11 +304,11 @@ genEnumBitmap funcName (defPUA, pPUA) (def, pDef) planes0To3 plane14 = mconcat
         -- Only planes 0-3
         then
             ( mconcat
-                [ " = \\c -> let !cp = ord c in if cp >= 0x"
+                [ " = \\c# -> let !cp = ord# c# in if cp# >=# 0x"
                 , showPaddedHeX (length planes0To3')
-                , " then "
+                , "# then "
                 , pDef
-                , " else lookupIntN bitmap# cp\n"
+                , " else lookupIntN bitmap# cp#\n"
                 , "    where\n" ]
             , planes0To3' )
         -- All the planes
@@ -319,32 +317,32 @@ genEnumBitmap funcName (defPUA, pPUA) (def, pDef) planes0To3 plane14 = mconcat
                 bound1 = length planes0To3'
                 bound2 = 0xE0000 + length plane14'
             in ( mconcat
-                    [ " c\n"
+                    [ " c#\n"
                     , "    -- Planes 0-3\n"
-                    , "    | cp < 0x", showPaddedHeX bound1
-                                     , " = lookupIntN bitmap# cp\n"
+                    , "    | isTrue# (cp# <# 0x", showPaddedHeX bound1
+                                     , "#) = lookupIntN bitmap# cp#\n"
                     , "    -- Planes 4-13: ", show def, "\n"
-                    , "    | cp < 0xE0000 = " <> pDef, "\n"
+                    , "    | isTrue# (cp# <# 0xE0000#) = " <> pDef, "\n"
                     , "    -- Plane 14\n"
-                    , "    | cp < 0x", showPaddedHeX bound2
-                                     , " = lookupIntN bitmap# (cp - 0x"
+                    , "    | isTrue# (cp# <# 0x", showPaddedHeX bound2
+                                     , "#) = lookupIntN bitmap# (cp# -# 0x"
                                      , showPaddedHeX (0xE0000 - bound1)
-                                     , ")\n"
+                                     , "#)\n"
                     , if defPUA == def
                         then ""
                         else mconcat
                             [ "    -- Plane 14: ", show def, "\n"
-                            , "    | cp < 0xF0000 = ", pDef, "\n"
+                            , "    | isTrue# (cp# <# 0xF0000#) = ", pDef, "\n"
                             , "    -- Plane 15: ", show defPUA, "\n"
-                            , "    | cp < 0xFFFFE = ", pPUA, "\n"
+                            , "    | isTrue# (cp# <# 0xFFFFE#) = ", pPUA, "\n"
                             , "    -- Plane 15: ", show def, "\n"
-                            , "    | cp < 0x100000 = " <> pDef, "\n"
+                            , "    | isTrue# (cp# <# 0x100000#) = " <> pDef, "\n"
                             , "    -- Plane 16: ", show defPUA, "\n"
-                            , "    | cp < 0x10FFFE = " <> pPUA, "\n" ]
+                            , "    | isTrue# (cp# <# 0x10FFFE#) = " <> pPUA, "\n" ]
                     , "    -- Default: ", show def, "\n"
                     , "    | otherwise = " <> pDef, "\n"
                     , "    where\n"
-                    , "    !cp = ord c\n" ]
+                    , "    !cp# = ord# c#\n" ]
                 , planes0To3' <> plane14' )
 
 splitPlanes :: (HasCallStack) => String -> (a -> Bool) -> [a] -> ([a], [a])
@@ -994,9 +992,8 @@ genGeneralCategoryModule moduleName =
         , init $ foldMap mkCharBoundPatternExport charBoundPatterns
         , ") where"
         , ""
-        , "import Data.Char (ord)"
         , "import Data.Word (Word8)"
-        , "import GHC.Exts (Ptr(..))"
+        , "import GHC.Exts (Ptr(..), Char#, Int#, isTrue#, ord#, (>=#), (<=#), (<#), (-#))"
         , "import Unicode.Internal.Bits (lookupIntN)"
         , ""
         , "--------------------------------------------------------------------------------"
@@ -1015,7 +1012,7 @@ genGeneralCategoryModule moduleName =
         , "--"
         , "-- The caller of this function must ensure its parameter is \\< @0x40000@."
         , "{-# INLINE generalCategoryPlanes0To3 #-}"
-        , "generalCategoryPlanes0To3 :: Int -> Int"
+        , "generalCategoryPlanes0To3 :: Int# -> Int#"
         , "generalCategoryPlanes0To3 = lookupIntN bitmap#"
         , "    where"
         , "    !(Ptr bitmap#) = generalCategoryBitmap"
@@ -1033,15 +1030,15 @@ genGeneralCategoryModule moduleName =
         mkGeneralCategoryPatternExport = mkExport . generalCategoryConstructor
         mkGeneralCategoryPattern gc = mconcat
             [ "\n-- | General category ", show gc, "\n"
-            , "pattern ", generalCategoryConstructor gc, " :: Int\n"
+            , "pattern ", generalCategoryConstructor gc, " :: Int#\n"
             , "pattern ", generalCategoryConstructor gc
             , " = "
-            , show (fromEnum gc), "\n"]
+            , show (fromEnum gc), "#\n"]
         mkCharBoundPatternExport = mkExport . fst
         mkCharBoundPattern (p, c) = mconcat
             [ "\n-- | Maximum codepoint satisfying @", 'i' : drop 4 p, "@\n"
-            , "pattern ", p, " :: Int\n"
-            , "pattern ", p, " = 0x", showHexCodepoint c, "\n"]
+            , "pattern ", p, " :: Int#\n"
+            , "pattern ", p, " = 0x", showHexCodepoint c, "#\n"]
         charBoundPatterns =
             [ ("MaxIsLetter"   , maxIsLetter   )
             , ("MaxIsAlphaNum" , maxIsAlphaNum )
@@ -1154,9 +1151,8 @@ genDecomposableModule moduleName dtype =
             , "(isDecomposable)"
             , "where"
             , ""
-            , "import Data.Char (ord)"
             , "import Data.Word (Word8)"
-            , "import GHC.Exts (Ptr(..))"
+            , "import GHC.Exts (Char#, Int#, Ptr(..), (<=#), (>=#), andI#, ord#)"
             , "import Unicode.Internal.Bits (lookupBit64)"
             , ""
             , genBitmap "isDecomposable" (reverse st)
@@ -1182,9 +1178,8 @@ genCombiningClassModule moduleName =
             , "(combiningClass, isCombining)"
             , "where"
             , ""
-            , "import Data.Char (ord)"
             , "import Data.Word (Word8)"
-            , "import GHC.Exts (Ptr(..))"
+            , "import GHC.Exts (Char#, Int#, Ptr(..), (<=#), (>=#), andI#, ord#)"
             , "import Unicode.Internal.Bits (lookupBit64)"
             , ""
             , "combiningClass :: Char -> Int"
@@ -1311,9 +1306,8 @@ genCompositionsModule moduleName compExclu non0CC =
         , "(compose, composeStarters, isSecondStarter)"
         , "where"
         , ""
-        , "import Data.Char (ord)"
         , "import Data.Word (Word8)"
-        , "import GHC.Exts (Ptr(..))"
+        , "import GHC.Exts (Char#, Int#, Ptr(..), (<=#), (>=#), andI#, ord#)"
         , "import Unicode.Internal.Bits (lookupBit64)"
         , ""
         ]
@@ -1523,9 +1517,8 @@ genCorePropertiesModule moduleName isProp =
         , "(" ++ unwords (intersperse "," (map prop2FuncName exports)) ++ ")"
         , "where"
         , ""
-        , "import Data.Char (ord)"
         , "import Data.Word (Word8)"
-        , "import GHC.Exts (Ptr(..))"
+        , "import GHC.Exts (Char#, Int#, Ptr(..), (<=#), (>=#), (-#), andI#, orI#, ord#)"
         , "import Unicode.Internal.Bits (lookupBit64)"
         , ""
         ]
@@ -1790,9 +1783,8 @@ genIdentifierStatusModule moduleName =
         , "(isAllowedInIdentifier)"
         , "where"
         , ""
-        , "import Data.Char (ord)"
         , "import Data.Word (Word8)"
-        , "import GHC.Exts (Ptr(..))"
+        , "import GHC.Exts (Char#, Int#, Ptr(..), (<=#), (>=#), andI#, ord#)"
         , "import Unicode.Internal.Bits (lookupBit64)"
         , ""
         , genBitmap "isAllowedInIdentifier" values

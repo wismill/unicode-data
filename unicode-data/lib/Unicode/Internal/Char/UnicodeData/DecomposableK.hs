@@ -12,15 +12,15 @@ module Unicode.Internal.Char.UnicodeData.DecomposableK
 (isDecomposable)
 where
 
-import Data.Char (ord)
 import Data.Word (Word8)
-import GHC.Exts (Ptr(..))
+import GHC.Exts (Char#, Int#, Ptr(..), (<=#), (>=#), andI#, ord#)
 import Unicode.Internal.Bits (lookupBit64)
 
 {-# INLINE isDecomposable #-}
-isDecomposable :: Char -> Bool
-isDecomposable = \c -> let !cp = ord c in cp >= 0x00A0 && cp <= 0x2FA1D && lookupBit64 bitmap# cp
+isDecomposable :: Char# -> Int#
+isDecomposable c# = (cp# >=# 0x00A0#) `andI#` (cp# <=# 0x2FA1D#) `andI#` lookupBit64 bitmap# cp#
     where
+    !cp# = ord# c#
     !(Ptr bitmap#) = isDecomposableBitmap
 
 isDecomposableBitmap :: Ptr Word8

@@ -19,7 +19,7 @@ module Unicode.Char.General.Compat
     , isSpace
     ) where
 
-import Data.Char (ord)
+import GHC.Exts (Char(..), ord#, (<=#), isTrue#, andI#, (==#))
 import qualified Unicode.Internal.Char.UnicodeData.GeneralCategory as UC
 
 -- | Same as 'isLetter'.
@@ -50,13 +50,13 @@ prop> isLetter c == Data.Char.isLetter c
 -}
 {-# INLINE isLetter #-}
 isLetter :: Char -> Bool
-isLetter c =
-    let !cp = ord c
+isLetter (C# c) =
+    let !cp = ord# c
     -- NOTE: The guard constant is updated at each Unicode revision.
     --       It must be < 0x40000 to be accepted by generalCategoryPlanes0To3.
-    in cp <= UC.MaxIsLetter &&
+    in isTrue# ((cp <=# UC.MaxIsLetter) `andI#`
         let !gc = UC.generalCategoryPlanes0To3 cp
-        in gc <= UC.OtherLetter
+        in gc <=# UC.OtherLetter)
     -- Use the following in case the previous code is not valid anymore:
     -- UC.generalCategory c <= UC.OtherLetter
 
@@ -79,11 +79,11 @@ prop> isSpace c == Data.Char.isSpace c
 isSpace :: Char -> Bool
 -- NOTE: The guard constant is updated at each Unicode revision.
 --       It must be < 0x40000 to be accepted by generalCategoryPlanes0To3.
-isSpace c = cp <= UC.MaxIsSpace && case c of
-    '\t' -> True
-    '\n' -> True
-    '\v' -> True
-    '\f' -> True
-    '\r' -> True
-    _    -> UC.generalCategoryPlanes0To3 cp == UC.Space
-    where cp = ord c
+isSpace (C# c) = isTrue# ((cp <=# UC.MaxIsSpace) `andI#` case c of
+    '\t'# -> 1#
+    '\n'# -> 1#
+    '\v'# -> 1#
+    '\f'# -> 1#
+    '\r'# -> 1#
+    _     -> UC.generalCategoryPlanes0To3 cp ==# UC.Space)
+    where !cp = ord# c
