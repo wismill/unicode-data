@@ -15,7 +15,7 @@ where
 import Data.Char (ord)
 import Data.Word (Word8)
 import GHC.Exts (Ptr(..))
-import Unicode.Internal.Bits (lookupBit64)
+import Unicode.Internal.Bits (lookupBit)
 
 {-# NOINLINE compose #-}
 compose :: Char -> Char -> Maybe Char
@@ -1012,7 +1012,7 @@ composeStarters _ _ = Nothing
 
 {-# INLINE isSecondStarter #-}
 isSecondStarter :: Char -> Bool
-isSecondStarter = \c -> let cp = ord c in cp >= 0x09BE && cp <= 0x11930 && lookupBit64 bitmap# cp
+isSecondStarter = \c -> let cp = ord c in cp >= 0x09BE && cp <= 0x11930 && lookupBit bitmap# cp
     where
     !(Ptr bitmap#) = isSecondStarterBitmap
 

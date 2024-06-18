@@ -15,11 +15,11 @@ where
 import Data.Char (ord)
 import Data.Word (Word8)
 import GHC.Exts (Ptr(..))
-import Unicode.Internal.Bits (lookupBit64)
+import Unicode.Internal.Bits (lookupBit)
 
 {-# INLINE isDecomposable #-}
 isDecomposable :: Char -> Bool
-isDecomposable = \c -> let cp = ord c in cp >= 0x00C0 && cp <= 0x2FA1D && lookupBit64 bitmap# cp
+isDecomposable = \c -> let cp = ord c in cp >= 0x00C0 && cp <= 0x2FA1D && lookupBit bitmap# cp
     where
     !(Ptr bitmap#) = isDecomposableBitmap
 

@@ -185,7 +185,7 @@ genBitmap funcName ordList = mconcat
                 , showPaddedHeXB (minimum ordList)
                 , " && cp <= 0x"
                 , showPaddedHeXB (maximum ordList)
-                , " && lookupBit64 bitmap# cp\n"
+                , " && lookupBit bitmap# cp\n"
                 , "    where\n" ]
             , rawBitmap )
         -- Planes 0-3 and 14
@@ -203,10 +203,10 @@ genBitmap funcName ordList = mconcat
                             , " = False\n" ]
                         else ""
                     , "    | cp < 0x", showPaddedHeXB bound1
-                    , " = lookupBit64 bitmap# cp\n"
+                    , " = lookupBit bitmap# cp\n"
                     , "    | cp < 0xE0000 = False\n"
                     , "    | cp < 0x", showPaddedHeXB bound2
-                    , " = lookupBit64 bitmap# (cp - 0x"
+                    , " = lookupBit bitmap# (cp - 0x"
                     , showPaddedHeXB (0xE0000 - bound1)
                     , ")\n"
                     , "    | otherwise = False\n"

@@ -44,7 +44,7 @@ genIdentifierStatusModule moduleName = Fold step mempty done
         , "import Data.Char (ord)"
         , "import Data.Word (Word8)"
         , "import GHC.Exts (Ptr(..))"
-        , "import Unicode.Internal.Bits (lookupBit64)"
+        , "import Unicode.Internal.Bits (lookupBit)"
         , ""
         , genBitmap "isAllowedInIdentifier" (reverse values)
         ]

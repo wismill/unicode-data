@@ -15,15 +15,15 @@ where
 import Data.Char (ord)
 import Data.Word (Word8)
 import GHC.Exts (Ptr(..))
-import Unicode.Internal.Bits (lookupBit64)
+import Unicode.Internal.Bits (lookupBit)
 
 {-# INLINE isXID_Continue #-}
 isXID_Continue :: Char -> Bool
 isXID_Continue c
     | cp < 0x002F = False
-    | cp < 0x323B0 = lookupBit64 bitmap# cp
+    | cp < 0x323B0 = lookupBit bitmap# cp
     | cp < 0xE0000 = False
-    | cp < 0xE01F0 = lookupBit64 bitmap# (cp - 0xADC50)
+    | cp < 0xE01F0 = lookupBit bitmap# (cp - 0xADC50)
     | otherwise = False
     where
     cp = ord c
@@ -136,7 +136,7 @@ isXID_ContinueBitmap = Ptr
 
 {-# INLINE isXID_Start #-}
 isXID_Start :: Char -> Bool
-isXID_Start = \c -> let cp = ord c in cp >= 0x0041 && cp <= 0x323AF && lookupBit64 bitmap# cp
+isXID_Start = \c -> let cp = ord c in cp >= 0x0041 && cp <= 0x323AF && lookupBit bitmap# cp
     where
     !(Ptr bitmap#) = isXID_StartBitmap
 
@@ -248,9 +248,9 @@ isXID_StartBitmap = Ptr
 isID_Continue :: Char -> Bool
 isID_Continue c
     | cp < 0x002F = False
-    | cp < 0x323B0 = lookupBit64 bitmap# cp
+    | cp < 0x323B0 = lookupBit bitmap# cp
     | cp < 0xE0000 = False
-    | cp < 0xE01F0 = lookupBit64 bitmap# (cp - 0xADC50)
+    | cp < 0xE01F0 = lookupBit bitmap# (cp - 0xADC50)
     | otherwise = False
     where
     cp = ord c
@@ -363,7 +363,7 @@ isID_ContinueBitmap = Ptr
 
 {-# INLINE isID_Start #-}
 isID_Start :: Char -> Bool
-isID_Start = \c -> let cp = ord c in cp >= 0x0041 && cp <= 0x323AF && lookupBit64 bitmap# cp
+isID_Start = \c -> let cp = ord c in cp >= 0x0041 && cp <= 0x323AF && lookupBit bitmap# cp
     where
     !(Ptr bitmap#) = isID_StartBitmap
 
@@ -473,7 +473,7 @@ isID_StartBitmap = Ptr
 
 {-# INLINE isUppercase #-}
 isUppercase :: Char -> Bool
-isUppercase = \c -> let cp = ord c in cp >= 0x0041 && cp <= 0x1F189 && lookupBit64 bitmap# cp
+isUppercase = \c -> let cp = ord c in cp >= 0x0041 && cp <= 0x1F189 && lookupBit bitmap# cp
     where
     !(Ptr bitmap#) = isUppercaseBitmap
 
@@ -545,7 +545,7 @@ isUppercaseBitmap = Ptr
 
 {-# INLINE isLowercase #-}
 isLowercase :: Char -> Bool
-isLowercase = \c -> let cp = ord c in cp >= 0x0061 && cp <= 0x1E943 && lookupBit64 bitmap# cp
+isLowercase = \c -> let cp = ord c in cp >= 0x0061 && cp <= 0x1E943 && lookupBit bitmap# cp
     where
     !(Ptr bitmap#) = isLowercaseBitmap
 
@@ -616,7 +616,7 @@ isLowercaseBitmap = Ptr
 
 {-# INLINE isAlphabetic #-}
 isAlphabetic :: Char -> Bool
-isAlphabetic = \c -> let cp = ord c in cp >= 0x0041 && cp <= 0x323AF && lookupBit64 bitmap# cp
+isAlphabetic = \c -> let cp = ord c in cp >= 0x0041 && cp <= 0x323AF && lookupBit bitmap# cp
     where
     !(Ptr bitmap#) = isAlphabeticBitmap
 

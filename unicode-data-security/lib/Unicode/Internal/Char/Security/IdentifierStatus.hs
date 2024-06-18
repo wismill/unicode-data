@@ -16,11 +16,11 @@ where
 import Data.Char (ord)
 import Data.Word (Word8)
 import GHC.Exts (Ptr(..))
-import Unicode.Internal.Bits (lookupBit64)
+import Unicode.Internal.Bits (lookupBit)
 
 {-# INLINE isAllowedInIdentifier #-}
 isAllowedInIdentifier :: Char -> Bool
-isAllowedInIdentifier = \c -> let cp = ord c in cp >= 0x0027 && cp <= 0x323AF && lookupBit64 bitmap# cp
+isAllowedInIdentifier = \c -> let cp = ord c in cp >= 0x0027 && cp <= 0x323AF && lookupBit bitmap# cp
     where
     !(Ptr bitmap#) = isAllowedInIdentifierBitmap
 

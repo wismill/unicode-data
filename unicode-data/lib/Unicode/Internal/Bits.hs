@@ -13,7 +13,7 @@
 
 module Unicode.Internal.Bits
     ( -- * Bitmap lookup
-      lookupBit64,
+      lookupBit,
       lookupWord8AsInt,
       lookupWord16AsInt,
       lookupWord32#,
@@ -45,27 +45,28 @@ import GHC.Exts (unpackCString#)
 import GHC.CString (unpackCString#)
 #endif
 
--- | @lookup64 addr index@ looks up the bit stored at bit index @index@ using a
--- bitmap starting at the address @addr@. Looks up the 64-bit word containing
--- the bit and then the bit in that word. The caller must make sure that the
--- 64-bit word at the byte address (addr + index / 64) * 8 is legally
--- accessible memory.
---
-lookupBit64 :: Addr# -> Int -> Bool
-lookupBit64 addr# (I# index#) = W# (word## `and#` bitMask##) /= 0
+{- | @lookupBit addr index@ looks up the bit stored at bit index @index@ using
+a bitmap starting at the address @addr@. Looks up the word containing the bit
+and then the bit in that word. The caller must make sure that the bit word at
+the byte address @(addr + index / wfbs) * 8@, where @wfbs@ is the finite bit
+size of a word, is legally accessible memory.
+-}
+lookupBit :: Addr# -> Int -> Bool
+lookupBit addr# (I# index#) = W# (word## `and#` bitMask##) /= 0
   where
     !fbs@(I# fbs#) = finiteBitSize (0 :: Word) - 1
-    !(I# logFbs#) = case fbs of
+    !(I# log2Fbs) = case fbs of
       31 -> 5
       63 -> 6
       _  -> popCount fbs -- this is a really weird architecture
 
-    wordIndex# = index# `uncheckedIShiftRL#` logFbs#
+    wordIndex# = index# `uncheckedIShiftRL#` log2Fbs
 #ifdef WORDS_BIGENDIAN
     word## = byteSwap# (indexWordOffAddr# addr# wordIndex#)
 #else
     word## = indexWordOffAddr# addr# wordIndex#
 #endif
+    -- x % 2^n = x & (2^n - 1)
     bitIndex# = index# `andI#` fbs#
     bitMask## = 1## `uncheckedShiftL#` bitIndex#
 

@@ -72,7 +72,7 @@ genDecomposableModule moduleName dtype
             , "import Data.Char (ord)"
             , "import Data.Word (Word8)"
             , "import GHC.Exts (Ptr(..))"
-            , "import Unicode.Internal.Bits (lookupBit64)"
+            , "import Unicode.Internal.Bits (lookupBit)"
             , ""
             , genBitmap "isDecomposable" (reverse st)
             ]
