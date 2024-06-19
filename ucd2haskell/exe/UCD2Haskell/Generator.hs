@@ -472,7 +472,7 @@ genBitmapShamochu funcNameStr stage1 stage2 ordList = mconcat
     , funcName, " :: Char -> Bool\n"
     , funcName, func
     , "\n"
-    , generateShamochuBitmaps funcNameStr False BitMap stage1 stage2 id (packBits bitmap)
+    , generateShamochuBitmaps funcNameStr True BitMap stage1 stage2 id (packBits bitmap)
     ]
     where
     funcName = BB.string7 funcNameStr
@@ -482,11 +482,13 @@ genBitmapShamochu funcNameStr stage1 stage2 ordList = mconcat
         -- Only planes 0-3
         then
             ( mconcat
-                [ " = \\c -> let cp = ord c in cp >= 0x"
+                -- [ " = \\c -> let cp = ord c in cp >= 0x"
+                [ " = \\c -> let !cp@(I# cp#) = ord c in cp >= 0x"
                 , showPaddedHeXB (minimum ordList)
                 , " && cp <= 0x"
                 , showPaddedHeXB (maximum ordList)
-                , " && ", lookupFunc, " cp\n" ]
+                -- , " && ", lookupFunc, " cp\n" ]
+                , " && ", lookupFunc, " cp#\n" ]
             , rawBitmap )
         -- Planes 0-3 and 14
         else
@@ -503,15 +505,19 @@ genBitmapShamochu funcNameStr stage1 stage2 ordList = mconcat
                             , " = False\n" ]
                         else ""
                     , "    | cp < 0x", showPaddedHeXB bound1
-                    , " = ", lookupFunc, " cp\n"
+                    -- , " = ", lookupFunc, " cp\n"
+                    , " = ", lookupFunc, " cp#\n"
                     , "    | cp < 0xE0000 = False\n"
                     , "    | cp < 0x", showPaddedHeXB bound2
-                    , " = ", lookupFunc, " (cp - 0x"
-                    , showPaddedHeXB (0xE0000 - bound1)
+                    -- , " = ", lookupFunc, " (cp - 0x"
+                    -- , showPaddedHeXB (0xE0000 - bound1)
+                    , " = ", lookupFunc, " (cp# -# 0x"
+                    , showPaddedHeXB (0xE0000 - bound1), "#"
                     , ")\n"
                     , "    | otherwise = False\n"
                     , "    where\n"
-                    , "    cp = ord c\n" ]
+                    -- , "    cp = ord c\n" ]
+                    , "    !cp@(I# cp#) = ord c\n" ]
                 , planes0To3 <> plane14 )
 
 {-|
@@ -650,7 +656,7 @@ generateShamochuBitmaps name rawInt mapType powersStage1 powersStage2 convert xs
     case Shamochu.compress powersStage1 powersStage2 xs' of
         Shamochu.OneStage{..} -> trace' "OneStage" stats $ mconcat
             [ "{-# INLINE ", toLookupBitMapName name, " #-}\n"
-            , toLookupBitMapName name, " :: Int", rawSuffix, " -> ", outputType, rawSuffix, "\n"
+            , toLookupBitMapName name, " :: Int", rawSuffix, " -> ", outputType, "\n"
             , toLookupBitMapName name, " n =\n"
             -- Lookup:
             --    mask = (1 << chunk_size_log2) - 1;
@@ -772,13 +778,14 @@ generateShamochuBitmaps name rawInt mapType powersStage1 powersStage2 convert xs
     where
     xs' = Exts.fromList (convert <$> xs)
     -- lookupBit requires full words
-    maxWordBitSizeLog2 = 6 -- 2^6 = 64 bits
+    -- maxWordBitSizeLog2 = 6 -- 2^6 = 64 bits
+    maxWordBitSizeLog2 = 3
     maxWordByteSize = assert
         (all (>= maxWordBitSizeLog2) powersStage1) -- Chunks should not cut words
         (2^maxWordBitSizeLog2 `div` 8)
     outputType = case mapType of
         BitMap -> "Bool"
-        ByteMap -> "Int"
+        ByteMap -> if rawInt then "Int#" else "Int"
     pad ys = case mapType of
         -- Ensure lookupBit read full words at the edge
         BitMap -> case rem (length ys) maxWordByteSize of

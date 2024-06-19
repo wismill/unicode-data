@@ -88,7 +88,7 @@ genCorePropertiesModule moduleName isProp = Fold step initial done
             --     (prop2FuncName property)
             (genBitmapShamochu
                 (prop2FuncNameStr property)
-                (6 NE.:| [7])
+                (5 NE.:| [6, 7])
                 -- [2,3,4,5,6]
                 []
                 (IntSet.toAscList (values Map.! property)))
@@ -104,11 +104,13 @@ genCorePropertiesModule moduleName isProp = Fold step initial done
             <> mconcat (L.intersperse "\n    , " (map prop2FuncName exports))
         , "    ) where"
         , ""
-        , "import Data.Bits (Bits(..))"
+        -- , "import Data.Bits (Bits(..))"
         , "import Data.Char (ord)"
         , "import Data.Int (Int8)"
         , "import Data.Word (Word8, Word16)"
-        , "import GHC.Exts (Ptr(..))"
-        , "import Unicode.Internal.Bits (lookupBit, lookupWord16AsInt, lookupWord8AsInt)"
+        -- , "import GHC.Exts (Ptr(..))"
+        , "import GHC.Exts (Int#, Int(..), Ptr(..), andI#, iShiftL#, iShiftRL#, (+#), (-#))"
+        -- , "import Unicode.Internal.Bits (lookupBit, lookupWord16AsInt, lookupWord8AsInt)"
+        , "import Unicode.Internal.Bits (lookupBit#, lookupWord16AsInt#, lookupWord8AsInt#)"
         , ""
         ]

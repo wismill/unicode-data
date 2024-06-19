@@ -14,8 +14,11 @@
 module Unicode.Internal.Bits
     ( -- * Bitmap lookup
       lookupBit,
+      lookupBit#,
       lookupWord8AsInt,
+      lookupWord8AsInt#,
       lookupWord16AsInt,
+      lookupWord16AsInt#,
       lookupWord32#,
       -- * CString
       unpackCString#
@@ -26,7 +29,7 @@ module Unicode.Internal.Bits
 import GHC.Exts
        (Addr#, Int(..), Int#, Word(..), Word#, indexWord8OffAddr#,
         indexWord16OffAddr#, indexWord32OffAddr#,
-        and#, word2Int#, uncheckedShiftL#)
+        and#, word2Int#, uncheckedShiftL#, isTrue#)
 #if MIN_VERSION_base(4,16,0)
 import GHC.Exts (word8ToWord#, word16ToWord#, word32ToWord#)
 #endif
@@ -84,6 +87,22 @@ lookupBit addr# (I# byteIndex) (I# bitIndex#) =
 #endif
     bitMask## = 1## `uncheckedShiftL#` bitIndex#
 
+{- | @lookupBit addr byteIndex bitIndex@ looks up the bit stored in the byte
+at index @byteIndex@ at the bit index @bitIndex@ using a bitmap starting at the
+address @addr@. The caller must make sure that the byte at address
+@(addr + byteIndex)@ is legally accessible memory.
+-}
+lookupBit# :: Addr# -> Int# -> Int# -> Bool
+lookupBit# addr# byteIndex bitIndex# =
+    isTrue# (word2Int# (word## `and#` bitMask##))
+  where
+#if MIN_VERSION_base(4,16,0)
+    word## = word8ToWord# (indexWord8OffAddr# addr# byteIndex)
+#else
+    word## = indexWord8OffAddr# addr# byteIndex#
+#endif
+    bitMask## = 1## `uncheckedShiftL#` bitIndex#
+
 {-| @lookupWord8AsInt addr index@ looks up for the @index@-th @8@-bits word in
 the bitmap starting at @addr@, then convert it to an 'Int'.
 
@@ -105,11 +124,41 @@ lookupWord8AsInt addr# (I# index#) = I# (word2Int# word##)
     word## = indexWord8OffAddr# addr# index#
 #endif
 
+lookupWord8AsInt#
+  :: Addr# -- ^ Bitmap address
+  -> Int#  -- ^ Word index
+  -> Int#  -- ^ Resulting word as 'Int'
+lookupWord8AsInt# addr# index# = word2Int# word##
+  where
+#if MIN_VERSION_base(4,16,0)
+    word## = word8ToWord# (indexWord8OffAddr# addr# index#)
+#else
+    word## = indexWord8OffAddr# addr# index#
+#endif
+
 lookupWord16AsInt
   :: Addr# -- ^ Bitmap address
   -> Int   -- ^ Word index
   -> Int   -- ^ Resulting word as `Int`
 lookupWord16AsInt addr# (I# k#) = I# (word2Int# word##)
+    where
+#ifdef WORDS_BIGENDIAN
+#if MIN_VERSION_base(4,16,0)
+    word## = narrow16Word# (byteSwap16# (word16ToWord# (indexWord16OffAddr# addr# k#)))
+#else
+    word## = narrow16Word# (byteSwap16# (indexWord16OffAddr# addr# k#))
+#endif
+#elif MIN_VERSION_base(4,16,0)
+    word## = word16ToWord# (indexWord16OffAddr# addr# k#)
+#else
+    word## = indexWord16OffAddr# addr# k#
+#endif
+
+lookupWord16AsInt#
+  :: Addr# -- ^ Bitmap address
+  -> Int#  -- ^ Word index
+  -> Int#  -- ^ Resulting word as `Int`
+lookupWord16AsInt# addr# k# = word2Int# word##
     where
 #ifdef WORDS_BIGENDIAN
 #if MIN_VERSION_base(4,16,0)
