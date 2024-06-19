@@ -14,7 +14,6 @@
 module Unicode.Internal.Bits
     ( -- * Bitmap lookup
       lookupBit,
-      lookupBit',
       lookupWord8AsInt,
       lookupWord16AsInt,
       lookupWord32#,
@@ -24,32 +23,17 @@ module Unicode.Internal.Bits
 
 #include "MachDeps.h"
 
-import Data.Bits (Bits (..), FiniteBits (..))
-import GHC.Exts (
-    Addr#,
-    Int (..),
-    Int#,
-    Word (..),
-    Word#,
-    and#,
-    andI#,
-    indexWord16OffAddr#,
-    indexWord32OffAddr#,
-    indexWord8OffAddr#,
-    indexWordOffAddr#,
-    uncheckedIShiftRL#,
-    uncheckedShiftL#,
-    uncheckedIShiftL#,
-    word2Int#,
-    (+#)
- )
+import GHC.Exts
+       (Addr#, Int(..), Int#, Word(..), Word#, indexWord8OffAddr#,
+        indexWord16OffAddr#, indexWord32OffAddr#,
+        and#, word2Int#, uncheckedShiftL#)
 #if MIN_VERSION_base(4,16,0)
 import GHC.Exts (word8ToWord#, word16ToWord#, word32ToWord#)
 #endif
 #ifdef WORDS_BIGENDIAN
 import GHC.Exts
        (narrow16Word#, narrow32Word#,
-        byteSwap#, byteSwap16#, byteSwap32#)
+        byteSwap16#, byteSwap32#)
 #endif
 
 #if MIN_VERSION_base(4,15,0)
@@ -65,8 +49,8 @@ import GHC.CString (unpackCString#)
 -- byte address @(addr + index / wfbs)@, where @wfbs@ is the finite bit size of a
 -- word, is legally accessible memory.
 -- -}
--- lookupBit' :: Addr# -> Int -> Bool
--- lookupBit' addr# (I# index#) = W# (word## `and#` bitMask##) /= 0
+-- lookupBit :: Addr# -> Int -> Bool
+-- lookupBit addr# (I# index#) = W# (word## `and#` bitMask##) /= 0
 --   where
 --     !fbs@(I# fbs#) = finiteBitSize (0 :: Word) - 1
 --     !(I# log2Fbs) = case fbs of
@@ -83,32 +67,6 @@ import GHC.CString (unpackCString#)
 --     -- x % 2^n = x & (2^n - 1)
 --     bitIndex# = index# `andI#` fbs#
 --     bitMask## = 1## `uncheckedShiftL#` bitIndex#
-
-{- | @lookupBit addr index@ looks up the bit stored at bit index @index@ using
-a bitmap starting at the address @addr@. Looks up the word containing the bit
-and then the bit in that word. The caller must make sure that the word at the
-byte address @(addr + index / wfbs)@, where @wfbs@ is the finite bit size of a
-word, is legally accessible memory.
--}
-lookupBit' :: Addr# -> Int -> Int -> Bool
-lookupBit' addr# (I# byteIndex#) (I# bitIndex#) =
-    W# (word## `and#` bitMask##) /= 0
-  where
-    !fbs@(I# fbs#) = finiteBitSize (0 :: Word) - 1
-    !(I# log2Fbs) = case fbs of
-      31 -> 5 - 3
-      63 -> 6 - 3
-      _  -> popCount fbs -- this is a really weird architecture
-
-    wordIndex# = byteIndex# `uncheckedIShiftRL#` log2Fbs
-#ifdef WORDS_BIGENDIAN
-    word## = byteSwap# (indexWordOffAddr# addr# wordIndex#)
-#else
-    word## = indexWordOffAddr# addr# wordIndex#
-#endif
-    -- x % 2^n = x & (2^n - 1)
-    bitIndex'# = ((byteIndex# `uncheckedIShiftL#` 3#) +# bitIndex#) `andI#` fbs#
-    bitMask## = 1## `uncheckedShiftL#` bitIndex'#
 
 {- | @lookupBit addr byteIndex bitIndex@ looks up the bit stored in the byte
 at index @byteIndex@ at the bit index @bitIndex@ using a bitmap starting at the

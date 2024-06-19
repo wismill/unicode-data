@@ -25,7 +25,7 @@ import Data.Char (ord)
 import Data.Int (Int8)
 import Data.Word (Word8, Word16)
 import GHC.Exts (Ptr(..))
-import Unicode.Internal.Bits (lookupBit, lookupWord16AsInt, lookupWord8AsInt, lookupBit')
+import Unicode.Internal.Bits (lookupBit, lookupWord16AsInt, lookupWord8AsInt)
 
 {-# INLINE isXID_Continue #-}
 isXID_Continue :: Char -> Bool
@@ -604,12 +604,7 @@ isLowercase = \c -> let cp = ord c in cp >= 0x0061 && cp <= 0x1E943 && lookupIsL
 {-# INLINE lookupIsLowercaseBitMap #-}
 lookupIsLowercaseBitMap :: Int -> Bool
 lookupIsLowercaseBitMap n =
-    -- lookupBit data# (
-    --     lookupWord16AsInt offsets# (
-    --         n `shiftR` 9
-    --     ) + ((n `shiftR` 3) .&. mask)
-    -- ) (n .&. 7)
-    lookupBit' data# (
+    lookupBit data# (
         lookupWord16AsInt offsets# (
             n `shiftR` 9
         ) + ((n `shiftR` 3) .&. mask)
