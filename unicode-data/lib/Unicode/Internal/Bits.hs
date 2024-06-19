@@ -92,9 +92,9 @@ at index @byteIndex@ at the bit index @bitIndex@ using a bitmap starting at the
 address @addr@. The caller must make sure that the byte at address
 @(addr + byteIndex)@ is legally accessible memory.
 -}
-lookupBit# :: Addr# -> Int# -> Int# -> Bool
+lookupBit# :: Addr# -> Int# -> Int# -> Int#
 lookupBit# addr# byteIndex bitIndex# =
-    isTrue# (word2Int# (word## `and#` bitMask##))
+    word2Int# (word## `and#` bitMask##)
   where
 #if MIN_VERSION_base(4,16,0)
     word## = word8ToWord# (indexWord8OffAddr# addr# byteIndex)

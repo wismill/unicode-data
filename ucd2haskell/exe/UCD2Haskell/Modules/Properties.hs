@@ -109,7 +109,7 @@ genCorePropertiesModule moduleName isProp = Fold step initial done
         , "import Data.Int (Int8)"
         , "import Data.Word (Word8, Word16)"
         -- , "import GHC.Exts (Ptr(..))"
-        , "import GHC.Exts (Int#, Int(..), Ptr(..), andI#, iShiftL#, iShiftRL#, (+#), (-#))"
+        , "import GHC.Exts (Int#, Char(..), Int(..), Ptr(..), isTrue#, andI#, iShiftL#, iShiftRL#, ord#, (+#), (-#), (<#), (>=#), (<=#))"
         -- , "import Unicode.Internal.Bits (lookupBit, lookupWord16AsInt, lookupWord8AsInt)"
         , "import Unicode.Internal.Bits (lookupBit#, lookupWord16AsInt#, lookupWord8AsInt#)"
         , ""

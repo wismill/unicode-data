@@ -23,22 +23,22 @@ module Unicode.Internal.Char.DerivedCoreProperties
 import Data.Char (ord)
 import Data.Int (Int8)
 import Data.Word (Word8, Word16)
-import GHC.Exts (Int#, Int(..), Ptr(..), andI#, iShiftL#, iShiftRL#, (+#), (-#))
+import GHC.Exts (Int#, Char(..), Int(..), Ptr(..), isTrue#, andI#, iShiftL#, iShiftRL#, ord#, (+#), (-#), (<#), (>=#), (<=#))
 import Unicode.Internal.Bits (lookupBit#, lookupWord16AsInt#, lookupWord8AsInt#)
 
 {-# INLINE isXID_Continue #-}
 isXID_Continue :: Char -> Bool
-isXID_Continue c
-    | cp < 0x002F = False
-    | cp < 0x323B0 = lookupIsXID_ContinueBitMap cp#
-    | cp < 0xE0000 = False
-    | cp < 0xE01F0 = lookupIsXID_ContinueBitMap (cp# -# 0xADC50#)
+isXID_Continue (C# c)
+    | isTrue# (cp <# 0x002F#) = False
+    | isTrue# (cp <# 0x323B0#) = isTrue# (lookupIsXID_ContinueBitMap cp)
+    | isTrue# (cp <# 0xE0000#) = False
+    | isTrue# (cp <# 0xE01F0#) = isTrue# (lookupIsXID_ContinueBitMap (cp -# 0xADC50#))
     | otherwise = False
     where
-    !cp@(I# cp#) = ord c
+    cp = ord# c
 
 {-# INLINE lookupIsXID_ContinueBitMap #-}
-lookupIsXID_ContinueBitMap :: Int# -> Bool
+lookupIsXID_ContinueBitMap :: Int# -> Int#
 lookupIsXID_ContinueBitMap n =
     lookupBit# data# (
         lookupWord16AsInt# offsets# (
@@ -148,10 +148,10 @@ isXID_ContinueOffsetsBitMap = Ptr
 
 {-# INLINE isXID_Start #-}
 isXID_Start :: Char -> Bool
-isXID_Start = \c -> let !cp@(I# cp#) = ord c in cp >= 0x0041 && cp <= 0x323AF && lookupIsXID_StartBitMap cp#
+isXID_Start = \(C# c) -> let cp = ord# c in isTrue# ((cp >=# 0x0041#) `andI#` (cp <=# 0x323AF#) `andI#` lookupIsXID_StartBitMap cp)
 
 {-# INLINE lookupIsXID_StartBitMap #-}
-lookupIsXID_StartBitMap :: Int# -> Bool
+lookupIsXID_StartBitMap :: Int# -> Int#
 lookupIsXID_StartBitMap n =
     lookupBit# data# (
         lookupWord16AsInt# offsets# (
@@ -256,17 +256,17 @@ isXID_StartOffsetsBitMap = Ptr
 
 {-# INLINE isID_Continue #-}
 isID_Continue :: Char -> Bool
-isID_Continue c
-    | cp < 0x002F = False
-    | cp < 0x323B0 = lookupIsID_ContinueBitMap cp#
-    | cp < 0xE0000 = False
-    | cp < 0xE01F0 = lookupIsID_ContinueBitMap (cp# -# 0xADC50#)
+isID_Continue (C# c)
+    | isTrue# (cp <# 0x002F#) = False
+    | isTrue# (cp <# 0x323B0#) = isTrue# (lookupIsID_ContinueBitMap cp)
+    | isTrue# (cp <# 0xE0000#) = False
+    | isTrue# (cp <# 0xE01F0#) = isTrue# (lookupIsID_ContinueBitMap (cp -# 0xADC50#))
     | otherwise = False
     where
-    !cp@(I# cp#) = ord c
+    cp = ord# c
 
 {-# INLINE lookupIsID_ContinueBitMap #-}
-lookupIsID_ContinueBitMap :: Int# -> Bool
+lookupIsID_ContinueBitMap :: Int# -> Int#
 lookupIsID_ContinueBitMap n =
     lookupBit# data# (
         lookupWord16AsInt# offsets# (
@@ -376,10 +376,10 @@ isID_ContinueOffsetsBitMap = Ptr
 
 {-# INLINE isID_Start #-}
 isID_Start :: Char -> Bool
-isID_Start = \c -> let !cp@(I# cp#) = ord c in cp >= 0x0041 && cp <= 0x323AF && lookupIsID_StartBitMap cp#
+isID_Start = \(C# c) -> let cp = ord# c in isTrue# ((cp >=# 0x0041#) `andI#` (cp <=# 0x323AF#) `andI#` lookupIsID_StartBitMap cp)
 
 {-# INLINE lookupIsID_StartBitMap #-}
-lookupIsID_StartBitMap :: Int# -> Bool
+lookupIsID_StartBitMap :: Int# -> Int#
 lookupIsID_StartBitMap n =
     lookupBit# data# (
         lookupWord16AsInt# offsets# (
@@ -484,10 +484,10 @@ isID_StartOffsetsBitMap = Ptr
 
 {-# INLINE isUppercase #-}
 isUppercase :: Char -> Bool
-isUppercase = \c -> let !cp@(I# cp#) = ord c in cp >= 0x0041 && cp <= 0x1F189 && lookupIsUppercaseBitMap cp#
+isUppercase = \(C# c) -> let cp = ord# c in isTrue# ((cp >=# 0x0041#) `andI#` (cp <=# 0x1F189#) `andI#` lookupIsUppercaseBitMap cp)
 
 {-# INLINE lookupIsUppercaseBitMap #-}
-lookupIsUppercaseBitMap :: Int# -> Bool
+lookupIsUppercaseBitMap :: Int# -> Int#
 lookupIsUppercaseBitMap n =
     lookupBit# data# (
         lookupWord16AsInt# offsets# (
@@ -535,10 +535,10 @@ isUppercaseOffsetsBitMap = Ptr
 
 {-# INLINE isLowercase #-}
 isLowercase :: Char -> Bool
-isLowercase = \c -> let !cp@(I# cp#) = ord c in cp >= 0x0061 && cp <= 0x1E943 && lookupIsLowercaseBitMap cp#
+isLowercase = \(C# c) -> let cp = ord# c in isTrue# ((cp >=# 0x0061#) `andI#` (cp <=# 0x1E943#) `andI#` lookupIsLowercaseBitMap cp)
 
 {-# INLINE lookupIsLowercaseBitMap #-}
-lookupIsLowercaseBitMap :: Int# -> Bool
+lookupIsLowercaseBitMap :: Int# -> Int#
 lookupIsLowercaseBitMap n =
     lookupBit# data# (
         lookupWord16AsInt# offsets# (
@@ -588,10 +588,10 @@ isLowercaseOffsetsBitMap = Ptr
 
 {-# INLINE isAlphabetic #-}
 isAlphabetic :: Char -> Bool
-isAlphabetic = \c -> let !cp@(I# cp#) = ord c in cp >= 0x0041 && cp <= 0x323AF && lookupIsAlphabeticBitMap cp#
+isAlphabetic = \(C# c) -> let cp = ord# c in isTrue# ((cp >=# 0x0041#) `andI#` (cp <=# 0x323AF#) `andI#` lookupIsAlphabeticBitMap cp)
 
 {-# INLINE lookupIsAlphabeticBitMap #-}
-lookupIsAlphabeticBitMap :: Int# -> Bool
+lookupIsAlphabeticBitMap :: Int# -> Int#
 lookupIsAlphabeticBitMap n =
     lookupBit# data# (
         lookupWord16AsInt# offsets# (
