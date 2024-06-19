@@ -472,7 +472,8 @@ genBitmapShamochu funcNameStr stage1 stage2 ordList = mconcat
     , funcName, " :: Char -> Bool\n"
     , funcName, func
     , "\n"
-    , generateShamochuBitmaps funcNameStr True BitMap stage1 stage2 id (packBits bitmap)
+    , generateShamochuBitmaps funcNameStr False BitMap stage1 stage2 id (packBits bitmap)
+    -- , generateShamochuBitmaps funcNameStr True BitMap stage1 stage2 id (packBits bitmap)
     ]
     where
     funcName = BB.string7 funcNameStr
@@ -482,13 +483,13 @@ genBitmapShamochu funcNameStr stage1 stage2 ordList = mconcat
         -- Only planes 0-3
         then
             ( mconcat
-                -- [ " = \\c -> let cp = ord c in cp >= 0x"
-                [ " = \\c -> let !cp@(I# cp#) = ord c in cp >= 0x"
+                [ " c = c >= '\\x"
+                -- [ " = \\c -> let !cp@(I# cp#) = ord c in cp >= 0x"
                 , showPaddedHeXB (minimum ordList)
-                , " && cp <= 0x"
+                , "' && c <= '\\x"
                 , showPaddedHeXB (maximum ordList)
-                -- , " && ", lookupFunc, " cp\n" ]
-                , " && ", lookupFunc, " cp#\n" ]
+                , "' && ", lookupFunc, " (ord c)\n" ]
+                -- , " && ", lookupFunc, " cp#\n" ]
             , rawBitmap )
         -- Planes 0-3 and 14
         else
@@ -500,24 +501,26 @@ genBitmapShamochu funcNameStr stage1 stage2 ordList = mconcat
                     [ " c\n"
                     , if bound0 > 0
                         then mconcat
-                            [ "    | cp < 0x"
+                            -- [ "    | cp < 0x"
+                            [ "    | c < '\\x"
                             , showPaddedHeXB bound0
-                            , " = False\n" ]
+                            , "' = False\n" ]
                         else ""
-                    , "    | cp < 0x", showPaddedHeXB bound1
-                    -- , " = ", lookupFunc, " cp\n"
-                    , " = ", lookupFunc, " cp#\n"
-                    , "    | cp < 0xE0000 = False\n"
-                    , "    | cp < 0x", showPaddedHeXB bound2
-                    -- , " = ", lookupFunc, " (cp - 0x"
-                    -- , showPaddedHeXB (0xE0000 - bound1)
-                    , " = ", lookupFunc, " (cp# -# 0x"
-                    , showPaddedHeXB (0xE0000 - bound1), "#"
+                    , "    | c < '\\x", showPaddedHeXB bound1
+                    , "' = ", lookupFunc, " (ord c)\n"
+                    -- , " = ", lookupFunc, " cp#\n"
+                    , "    | c < '\\xE0000' = False\n"
+                    , "    | c < '\\x", showPaddedHeXB bound2
+                    , "' = ", lookupFunc, " (ord c - 0x"
+                    , showPaddedHeXB (0xE0000 - bound1)
+                    -- , " = ", lookupFunc, " (cp# -# 0x"
+                    -- , showPaddedHeXB (0xE0000 - bound1), "#"
                     , ")\n"
                     , "    | otherwise = False\n"
-                    , "    where\n"
+                    ]
+                    -- , "    where\n"
                     -- , "    cp = ord c\n" ]
-                    , "    !cp@(I# cp#) = ord c\n" ]
+                    -- , "    !cp@(I# cp#) = ord c\n" ]
                 , planes0To3 <> plane14 )
 
 {-|

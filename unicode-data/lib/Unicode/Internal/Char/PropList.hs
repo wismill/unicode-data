@@ -16,26 +16,27 @@ module Unicode.Internal.Char.PropList
     , isWhite_Space
     ) where
 
+import Data.Bits (Bits(..))
 import Data.Char (ord)
 import Data.Int (Int8)
 import Data.Word (Word8, Word16)
-import GHC.Exts (Int#, Int(..), Ptr(..), andI#, iShiftL#, iShiftRL#, (+#), (-#))
-import Unicode.Internal.Bits (lookupBit#, lookupWord16AsInt#, lookupWord8AsInt#)
+import GHC.Exts (Ptr(..))
+import Unicode.Internal.Bits (lookupBit, lookupWord16AsInt, lookupWord8AsInt)
 
 {-# INLINE isPattern_Syntax #-}
 isPattern_Syntax :: Char -> Bool
-isPattern_Syntax = \c -> let !cp@(I# cp#) = ord c in cp >= 0x0021 && cp <= 0xFE46 && lookupIsPattern_SyntaxBitMap cp#
+isPattern_Syntax c = c >= '\x0021' && c <= '\xFE46' && lookupIsPattern_SyntaxBitMap (ord c)
 
 {-# INLINE lookupIsPattern_SyntaxBitMap #-}
-lookupIsPattern_SyntaxBitMap :: Int# -> Bool
+lookupIsPattern_SyntaxBitMap :: Int -> Bool
 lookupIsPattern_SyntaxBitMap n =
-    lookupBit# data# (
-        lookupWord8AsInt# offsets# (
-            n `iShiftRL#` 8#
-        ) +# ((n `iShiftRL#` 3#) `andI#` mask)
-    ) (n `andI#` 7#)
+    lookupBit data# (
+        lookupWord8AsInt offsets# (
+            n `shiftR` 8
+        ) + ((n `shiftR` 3) .&. mask)
+    ) (n .&. 7)
     where
-    mask = (1# `iShiftL#` 5#) -# 1#
+    mask = (1 `shiftL` 5) - 1
     !(Ptr data#) = isPattern_SyntaxDataBitMap
     !(Ptr offsets#) = isPattern_SyntaxOffsetsBitMap
 
@@ -58,18 +59,18 @@ isPattern_SyntaxOffsetsBitMap = Ptr
 
 {-# INLINE isPattern_White_Space #-}
 isPattern_White_Space :: Char -> Bool
-isPattern_White_Space = \c -> let !cp@(I# cp#) = ord c in cp >= 0x0009 && cp <= 0x2029 && lookupIsPattern_White_SpaceBitMap cp#
+isPattern_White_Space c = c >= '\x0009' && c <= '\x2029' && lookupIsPattern_White_SpaceBitMap (ord c)
 
 {-# INLINE lookupIsPattern_White_SpaceBitMap #-}
-lookupIsPattern_White_SpaceBitMap :: Int# -> Bool
+lookupIsPattern_White_SpaceBitMap :: Int -> Bool
 lookupIsPattern_White_SpaceBitMap n =
-    lookupBit# data# (
-        lookupWord8AsInt# offsets# (
-            n `iShiftRL#` 8#
-        ) +# ((n `iShiftRL#` 3#) `andI#` mask)
-    ) (n `andI#` 7#)
+    lookupBit data# (
+        lookupWord8AsInt offsets# (
+            n `shiftR` 8
+        ) + ((n `shiftR` 3) .&. mask)
+    ) (n .&. 7)
     where
-    mask = (1# `iShiftL#` 5#) -# 1#
+    mask = (1 `shiftL` 5) - 1
     !(Ptr data#) = isPattern_White_SpaceDataBitMap
     !(Ptr offsets#) = isPattern_White_SpaceOffsetsBitMap
 
@@ -84,18 +85,18 @@ isPattern_White_SpaceOffsetsBitMap = Ptr
 
 {-# INLINE isWhite_Space #-}
 isWhite_Space :: Char -> Bool
-isWhite_Space = \c -> let !cp@(I# cp#) = ord c in cp >= 0x0009 && cp <= 0x3000 && lookupIsWhite_SpaceBitMap cp#
+isWhite_Space c = c >= '\x0009' && c <= '\x3000' && lookupIsWhite_SpaceBitMap (ord c)
 
 {-# INLINE lookupIsWhite_SpaceBitMap #-}
-lookupIsWhite_SpaceBitMap :: Int# -> Bool
+lookupIsWhite_SpaceBitMap :: Int -> Bool
 lookupIsWhite_SpaceBitMap n =
-    lookupBit# data# (
-        lookupWord8AsInt# offsets# (
-            n `iShiftRL#` 8#
-        ) +# ((n `iShiftRL#` 3#) `andI#` mask)
-    ) (n `andI#` 7#)
+    lookupBit data# (
+        lookupWord8AsInt offsets# (
+            n `shiftR` 8
+        ) + ((n `shiftR` 3) .&. mask)
+    ) (n .&. 7)
     where
-    mask = (1# `iShiftL#` 5#) -# 1#
+    mask = (1 `shiftL` 5) - 1
     !(Ptr data#) = isWhite_SpaceDataBitMap
     !(Ptr offsets#) = isWhite_SpaceOffsetsBitMap
 
