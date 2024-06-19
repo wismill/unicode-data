@@ -1014,7 +1014,7 @@ composeStarters _ _ = Nothing
 
 {-# INLINE isSecondStarter #-}
 isSecondStarter :: Char -> Bool
-isSecondStarter = \c -> let cp = ord c in cp >= 0x09BE && cp <= 0x11930 && lookupIsSecondStarterBitMap cp
+isSecondStarter c = c >= '\x09BE' && c <= '\x11930' && lookupIsSecondStarterBitMap (ord c)
 
 {-# INLINE lookupIsSecondStarterBitMap #-}
 lookupIsSecondStarterBitMap :: Int -> Bool
@@ -1042,7 +1042,7 @@ isSecondStarterDataBitMap = Ptr
     \\0\0\0\0\0\0\0\0\0\0\0\0\0\32\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\
     \\0\0\0\64\0\0\192\0\0\0\0\0\0\0\0\0\0\0\0\64\0\0\128\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\
     \\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\36\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\128\0\0\
-    \\0\0\0\0\0\0\0\0\0\0"#
+    \\0\0\0\0\0\0\0\0"#
 
 isSecondStarterOffsets1BitMap :: Ptr Word16
 isSecondStarterOffsets1BitMap = Ptr

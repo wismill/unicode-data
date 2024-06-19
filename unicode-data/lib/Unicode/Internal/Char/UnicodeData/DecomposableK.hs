@@ -21,7 +21,7 @@ import Unicode.Internal.Bits (lookupBit, lookupWord8AsInt, lookupWord16AsInt)
 
 {-# INLINE isDecomposable #-}
 isDecomposable :: Char -> Bool
-isDecomposable = \c -> let cp = ord c in cp >= 0x00A0 && cp <= 0x2FA1D && lookupIsDecomposableBitMap cp
+isDecomposable c = c >= '\x00A0' && c <= '\x2FA1D' && lookupIsDecomposableBitMap (ord c)
 
 {-# INLINE lookupIsDecomposableBitMap #-}
 lookupIsDecomposableBitMap :: Int -> Bool
@@ -90,7 +90,7 @@ isDecomposableDataBitMap = Ptr
     \\255\15\255\255\255\255\255\255\255\255\255\255\255\3\255\255\63\63\255\255\255\255\63\63\255\170\255\255\255\63\255\255\255\255\255\255\223\255\223\255\207\239\255\255\220\127\0\0\0\0\
     \\0\0\72\0\0\0\0\78\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\25\0\48\0\0\0\0\0\0\16\0\0\0\
     \\0\0\0\28\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\2\18\0\0\0\0\255\0\0\
-    \\0\0\0\0\0\0\0\0\0\0\0\24\0\176\0\0\0\0\0\0\0\0\0\0"#
+    \\0\0\0\0\0\0\0\0\0\0\0\24\0\176\0\0\0\0"#
 
 isDecomposableOffsets1BitMap :: Ptr Word16
 isDecomposableOffsets1BitMap = Ptr

@@ -583,7 +583,7 @@ script c
     !cp@(I# cp#) = ord c
 
 {-# INLINE lookupScriptPlanes0To1BitMap #-}
-lookupScriptPlanes0To1BitMap :: Int# -> Int#
+lookupScriptPlanes0To1BitMap :: Int# -> Int##
 lookupScriptPlanes0To1BitMap n =
     lookupWord8AsInt# data# (
         lookupWord16AsInt# offsets1# (

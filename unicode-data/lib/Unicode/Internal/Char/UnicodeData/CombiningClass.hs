@@ -949,7 +949,7 @@ combiningClass = \case
 
 {-# INLINE isCombining #-}
 isCombining :: Char -> Bool
-isCombining = \c -> let cp = ord c in cp >= 0x0300 && cp <= 0x1E94A && lookupIsCombiningBitMap cp
+isCombining c = c >= '\x0300' && c <= '\x1E94A' && lookupIsCombiningBitMap (ord c)
 
 {-# INLINE lookupIsCombiningBitMap #-}
 lookupIsCombiningBitMap :: Int -> Bool
@@ -1019,7 +1019,7 @@ isCombiningDataBitMap = Ptr
     \\224\0\0\0\0\0\0\0\0\192\255\1\0\0\0\0\0\60\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\127\0\0\0\0\0\
     \\0\0\0\0\0\0\0\0\240\7\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\255\31\226\255\1\0\0\0\0\0\0\0\0\0\
     \\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\128\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\247\255\253\33\16\3\
-    \\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\255\255\255\255\255\255\255\255\0\0\0\0\0\0"#
+    \\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\255\255\255\255\255\255\255\255"#
 
 isCombiningOffsets1BitMap :: Ptr Word16
 isCombiningOffsets1BitMap = Ptr

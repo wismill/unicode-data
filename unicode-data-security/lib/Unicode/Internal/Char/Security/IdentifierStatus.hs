@@ -20,7 +20,7 @@ import Unicode.Internal.Bits (lookupBit)
 
 {-# INLINE isAllowedInIdentifier #-}
 isAllowedInIdentifier :: Char -> Bool
-isAllowedInIdentifier = \c -> let cp = ord c in cp >= 0x0027 && cp <= 0x323AF && lookupIsAllowedInIdentifierBitMap cp
+isAllowedInIdentifier c = c >= '\x0027' && c <= '\x323AF' && lookupIsAllowedInIdentifierBitMap (ord c)
 
 {-# INLINE lookupIsAllowedInIdentifierBitMap #-}
 lookupIsAllowedInIdentifierBitMap :: Int -> Bool
@@ -81,7 +81,7 @@ isAllowedInIdentifierDataBitMap = Ptr
     \\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\
     \\255\255\255\255\255\255\255\1\0\0\0\254\223\253\255\255\253\239\243\223\61\96\32\195\255\0\0\237\223\253\255\255\253\239\243\223\61\96\32\207\255\14\0\237\223\253\255\255\255\255\
     \\231\207\125\240\0\195\255\0\252\236\127\126\252\191\255\251\47\127\132\95\127\0\0\4\0\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\255\67\255\255\255\255\255\
-    \\255\255\255\255\255\255\3\255\255\63\63\255\255\255\255\63\63\255\170\255\255\85\21\255\255\255\255\255\255\223\23\220\21\199\7\247\23\220\21\0"#
+    \\255\255\255\255\255\255\3\255\255\63\63\255\255\255\255\63\63\255\170\255\255\85\21\255\255\255\255\255\255\223\23\220\21\199\7\247\23\220\21"#
 
 isAllowedInIdentifierOffsets1BitMap :: Ptr Word16
 isAllowedInIdentifierOffsets1BitMap = Ptr
