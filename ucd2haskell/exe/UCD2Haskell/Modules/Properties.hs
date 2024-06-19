@@ -89,7 +89,8 @@ genCorePropertiesModule moduleName isProp = Fold step initial done
             (genBitmapShamochu
                 (prop2FuncNameStr property)
                 (6 NE.:| [7])
-                [2,3,4,5,6]
+                -- [2,3,4,5,6]
+                []
                 (IntSet.toAscList (values Map.! property)))
 
     header exports =

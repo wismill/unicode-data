@@ -31,18 +31,14 @@ isPattern_Syntax = \c -> let cp = ord c in cp >= 0x0021 && cp <= 0xFE46 && looku
 lookupIsPattern_SyntaxBitMap :: Int -> Bool
 lookupIsPattern_SyntaxBitMap n =
     lookupBit data# (
-        lookupWord16AsInt offsets1# (
-            lookupWord8AsInt offsets2# (
-                n `shiftR` 12
-            ) + ((n `shiftR` 9) .&. maskOffsets)
-        ) + ((n `shiftR` 3) .&. maskData)
+        lookupWord16AsInt offsets# (
+            n `shiftR` 9
+        ) + ((n `shiftR` 3) .&. mask)
     ) (n .&. 7)
     where
-    maskData = (1 `shiftL` 6) - 1
-    maskOffsets = (1 `shiftL` 3) - 1
+    mask = (1 `shiftL` 6) - 1
     !(Ptr data#) = isPattern_SyntaxDataBitMap
-    !(Ptr offsets1#) = isPattern_SyntaxOffsets1BitMap
-    !(Ptr offsets2#) = isPattern_SyntaxOffsets2BitMap
+    !(Ptr offsets#) = isPattern_SyntaxOffsetsBitMap
 
 isPattern_SyntaxDataBitMap :: Ptr Int8
 isPattern_SyntaxDataBitMap = Ptr
@@ -58,13 +54,11 @@ isPattern_SyntaxDataBitMap = Ptr
     \\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\192\
     \\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\96\0\0\0"#
 
-isPattern_SyntaxOffsets1BitMap :: Ptr Word16
-isPattern_SyntaxOffsets1BitMap = Ptr
-    "\89\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\0\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\25\0\4\2\42\1\216\0\184\0\234\0\216\0\216\0\120\0\140\1"#
-
-isPattern_SyntaxOffsets2BitMap :: Ptr Word8
-isPattern_SyntaxOffsets2BitMap = Ptr
-    "\0\1\19\9\1\1\1\1\1\1\1\1\1\1\1\11"#
+isPattern_SyntaxOffsetsBitMap :: Ptr Word16
+isPattern_SyntaxOffsetsBitMap = Ptr
+    "\89\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\42\1\216\0\184\0\234\0\216\0\216\0\120\0\140\1\0\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\
+    \\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\
+    \\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\120\0\25\0\4\2"#
 
 {-# INLINE isPattern_White_Space #-}
 isPattern_White_Space :: Char -> Bool
@@ -74,18 +68,14 @@ isPattern_White_Space = \c -> let cp = ord c in cp >= 0x0009 && cp <= 0x2029 && 
 lookupIsPattern_White_SpaceBitMap :: Int -> Bool
 lookupIsPattern_White_SpaceBitMap n =
     lookupBit data# (
-        lookupWord8AsInt offsets1# (
-            lookupWord8AsInt offsets2# (
-                n `shiftR` 11
-            ) + ((n `shiftR` 9) .&. maskOffsets)
-        ) + ((n `shiftR` 3) .&. maskData)
+        lookupWord8AsInt offsets# (
+            n `shiftR` 9
+        ) + ((n `shiftR` 3) .&. mask)
     ) (n .&. 7)
     where
-    maskData = (1 `shiftL` 6) - 1
-    maskOffsets = (1 `shiftL` 2) - 1
+    mask = (1 `shiftL` 6) - 1
     !(Ptr data#) = isPattern_White_SpaceDataBitMap
-    !(Ptr offsets1#) = isPattern_White_SpaceOffsets1BitMap
-    !(Ptr offsets2#) = isPattern_White_SpaceOffsets2BitMap
+    !(Ptr offsets#) = isPattern_White_SpaceOffsetsBitMap
 
 isPattern_White_SpaceDataBitMap :: Ptr Int8
 isPattern_White_SpaceDataBitMap = Ptr
@@ -94,13 +84,9 @@ isPattern_White_SpaceDataBitMap = Ptr
     \\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\192\0\0\0\3\
     \\0\0"#
 
-isPattern_White_SpaceOffsets1BitMap :: Ptr Word8
-isPattern_White_SpaceOffsets1BitMap = Ptr
-    "\0\17\17\17\17\144"#
-
-isPattern_White_SpaceOffsets2BitMap :: Ptr Word8
-isPattern_White_SpaceOffsets2BitMap = Ptr
-    "\0\1\1\1\5"#
+isPattern_White_SpaceOffsetsBitMap :: Ptr Word8
+isPattern_White_SpaceOffsetsBitMap = Ptr
+    "\0\17\17\17\17\17\17\17\17\17\17\17\17\17\17\17\144"#
 
 {-# INLINE isWhite_Space #-}
 isWhite_Space :: Char -> Bool
@@ -110,18 +96,14 @@ isWhite_Space = \c -> let cp = ord c in cp >= 0x0009 && cp <= 0x3000 && lookupIs
 lookupIsWhite_SpaceBitMap :: Int -> Bool
 lookupIsWhite_SpaceBitMap n =
     lookupBit data# (
-        lookupWord8AsInt offsets1# (
-            lookupWord8AsInt offsets2# (
-                n `shiftR` 11
-            ) + ((n `shiftR` 9) .&. maskOffsets)
-        ) + ((n `shiftR` 3) .&. maskData)
+        lookupWord8AsInt offsets# (
+            n `shiftR` 9
+        ) + ((n `shiftR` 3) .&. mask)
     ) (n .&. 7)
     where
-    maskData = (1 `shiftL` 6) - 1
-    maskOffsets = (1 `shiftL` 2) - 1
+    mask = (1 `shiftL` 6) - 1
     !(Ptr data#) = isWhite_SpaceDataBitMap
-    !(Ptr offsets1#) = isWhite_SpaceOffsets1BitMap
-    !(Ptr offsets2#) = isWhite_SpaceOffsets2BitMap
+    !(Ptr offsets#) = isWhite_SpaceOffsetsBitMap
 
 isWhite_SpaceDataBitMap :: Ptr Int8
 isWhite_SpaceDataBitMap = Ptr
@@ -132,11 +114,7 @@ isWhite_SpaceDataBitMap = Ptr
     \\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\
     \\0\0\0\0\0\0\0\0\0\0\0\0\0\0"#
 
-isWhite_SpaceOffsets1BitMap :: Ptr Word8
-isWhite_SpaceOffsets1BitMap = Ptr
-    "\0\21\21\21\21\69\150\21\21\21\69\4"#
-
-isWhite_SpaceOffsets2BitMap :: Ptr Word8
-isWhite_SpaceOffsets2BitMap = Ptr
-    "\0\1\2\1\6\1\11"#
+isWhite_SpaceOffsetsBitMap :: Ptr Word8
+isWhite_SpaceOffsetsBitMap = Ptr
+    "\0\21\21\21\21\21\21\21\21\21\21\69\21\21\21\21\150\21\21\21\21\21\21\21\4"#
 
