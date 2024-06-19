@@ -19,15 +19,15 @@ module Unicode.Internal.Char.PropList
 import Data.Char (ord)
 import Data.Int (Int8)
 import Data.Word (Word8, Word16)
-import GHC.Exts (Int#, Char(..), Int(..), Ptr(..), isTrue#, andI#, iShiftL#, iShiftRL#, ord#, (+#), (-#), (<#), (>=#), (<=#))
+import GHC.Exts (Int#, Int(..), Ptr(..), andI#, iShiftL#, iShiftRL#, (+#), (-#))
 import Unicode.Internal.Bits (lookupBit#, lookupWord16AsInt#, lookupWord8AsInt#)
 
 {-# INLINE isPattern_Syntax #-}
 isPattern_Syntax :: Char -> Bool
-isPattern_Syntax = \(C# c) -> let cp = ord# c in isTrue# ((cp >=# 0x0021#) `andI#` (cp <=# 0xFE46#) `andI#` lookupIsPattern_SyntaxBitMap cp)
+isPattern_Syntax = \c -> let !cp@(I# cp#) = ord c in cp >= 0x0021 && cp <= 0xFE46 && lookupIsPattern_SyntaxBitMap cp#
 
 {-# INLINE lookupIsPattern_SyntaxBitMap #-}
-lookupIsPattern_SyntaxBitMap :: Int# -> Int#
+lookupIsPattern_SyntaxBitMap :: Int# -> Bool
 lookupIsPattern_SyntaxBitMap n =
     lookupBit# data# (
         lookupWord8AsInt# offsets# (
@@ -58,10 +58,10 @@ isPattern_SyntaxOffsetsBitMap = Ptr
 
 {-# INLINE isPattern_White_Space #-}
 isPattern_White_Space :: Char -> Bool
-isPattern_White_Space = \(C# c) -> let cp = ord# c in isTrue# ((cp >=# 0x0009#) `andI#` (cp <=# 0x2029#) `andI#` lookupIsPattern_White_SpaceBitMap cp)
+isPattern_White_Space = \c -> let !cp@(I# cp#) = ord c in cp >= 0x0009 && cp <= 0x2029 && lookupIsPattern_White_SpaceBitMap cp#
 
 {-# INLINE lookupIsPattern_White_SpaceBitMap #-}
-lookupIsPattern_White_SpaceBitMap :: Int# -> Int#
+lookupIsPattern_White_SpaceBitMap :: Int# -> Bool
 lookupIsPattern_White_SpaceBitMap n =
     lookupBit# data# (
         lookupWord8AsInt# offsets# (
@@ -84,10 +84,10 @@ isPattern_White_SpaceOffsetsBitMap = Ptr
 
 {-# INLINE isWhite_Space #-}
 isWhite_Space :: Char -> Bool
-isWhite_Space = \(C# c) -> let cp = ord# c in isTrue# ((cp >=# 0x0009#) `andI#` (cp <=# 0x3000#) `andI#` lookupIsWhite_SpaceBitMap cp)
+isWhite_Space = \c -> let !cp@(I# cp#) = ord c in cp >= 0x0009 && cp <= 0x3000 && lookupIsWhite_SpaceBitMap cp#
 
 {-# INLINE lookupIsWhite_SpaceBitMap #-}
-lookupIsWhite_SpaceBitMap :: Int# -> Int#
+lookupIsWhite_SpaceBitMap :: Int# -> Bool
 lookupIsWhite_SpaceBitMap n =
     lookupBit# data# (
         lookupWord8AsInt# offsets# (
