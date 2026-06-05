@@ -93,6 +93,7 @@ spec = do
                                   , S.Thaana
                                   , S.Yezidi ]
             '\x0965'  `shouldBe'` [ S.Bengali
+                                  , S.Chisoi
                                   , S.Devanagari
                                   , S.Dogra
                                   , S.Grantha

@@ -5,7 +5,7 @@
 # we used to generate them earlier are exactly the same as the ones we are
 # downloading. To ensure that verfication of the checksum is necessary.
 
-VERSION=17.0.0
+VERSION=18.0.0
 
 # When downloading fresh new version comment this out
 VERIFY_CHECKSUM=y
@@ -16,20 +16,20 @@ UCD_URL="https://www.unicode.org/Public/$VERSION/ucd"
 # $ find data/$VERSION/ -type f -print0 | xargs -0 sha256sum
 # Format: filename:checksum
 UCD_FILES="\
-    Blocks.txt:c0edefaf1a19771e830a82735472716af6bf3c3975f6c2a23ffbe2580fbbcb15\
-    CaseFolding.txt:ff8d8fefbf123574205085d6714c36149eb946d717a0c585c27f0f4ef58c4183\
-    DerivedCoreProperties.txt:24c7fed1195c482faaefd5c1e7eb821c5ee1fb6de07ecdbaa64b56a99da22c08\
-    DerivedNormalizationProps.txt:71fd6a206a2c0cdd41feb6b7f656aa31091db45e9cedc926985d718397f9e488\
-    NameAliases.txt:793f6f1e4d15fd90f05ae66460191dc4d75d1fea90136a25f30dd6a4cb950eac\
-    PropertyValueAliases.txt:64e9a5f76f7a1e8b5a47d6a1f9a26522a251208f5276bdfa1559dac7cf2e827a\
-    PropList.txt:130dcddcaadaf071008bdfce1e7743e04fdfbc910886f017d9f9ac931d8c64dd\
-    Scripts.txt:9f5e50d3abaee7d6ce09480f325c706f485ae3240912527e651954d2d6b035bf\
-    ScriptExtensions.txt:ec2107e58825a1586acee8e0911ce18260394ac8b87e535ca325f1ccbeb06bc6\
-    SpecialCasing.txt:efc25faf19de21b92c1194c111c932e03d2a5eaf18194e33f1156e96de4c9588\
-    UnicodeData.txt:2e1efc1dcb59c575eedf5ccae60f95229f706ee6d031835247d843c11d96470c\
-    extracted/DerivedCombiningClass.txt:191463abfbd202703c6fd6776a92a23ac44ec65e0476a7f95aa91ca492cef29b\
-    extracted/DerivedName.txt:019758bbe6c756c40fca6d505187ea660c5e195533e2ff2c841963a212c9d369\
-    extracted/DerivedNumericValues.txt:139b976bdc288be01c80f018523da769cf2845109b5a7f0f8a432db64bfedcfa"
+    Blocks.txt:2ba23579ee38e0b62b00a1a448f094eb54a823fb96109da685ad261b9bd493f2\
+    CaseFolding.txt:a004797658a457bec4dc11683e39f69249ea3b595b752dbea6721c4c9f587b0d\
+    DerivedCoreProperties.txt:b040c9b05cd49ca9ecced4066e667abf7513488fa726cc01bbd54948319bdea6\
+    DerivedNormalizationProps.txt:98ac7f67d985fe781e317f6182e885e94cabb0c314769e6dd73e48b226931ccd\
+    NameAliases.txt:3d5cf5e468901b080cd99adf2230061b748083705fe633db43ac8b73ec7a13da\
+    PropertyValueAliases.txt:19a6c4ab639d09a42881507ff1a1055286768f24e9b96d1e810b354a759ec030\
+    PropList.txt:ff65a2e6a57992504dad1251281eb9de7f0b223f73c7af9108466b5769141721\
+    Scripts.txt:66b1d21a528a1eb8bbfd48e05c2c0808435e90d1787cf5a69752dc88f6e941a0\
+    ScriptExtensions.txt:a5dfefc6660af2e34f47269915ca321f58574aa276de2acea9760cd94af96968\
+    SpecialCasing.txt:8538dea57c184f1ef3783885ea79677b10f6efa06423717157e63712f14d1ad2\
+    UnicodeData.txt:3a30a86cb25ccd95a63baffeabce026ccf59a19d2f7e705acc0a44c1326a5764\
+    extracted/DerivedCombiningClass.txt:10048c71ff6860cb707ee21cb7d401a1e50b1169e8e5613018ebca616ed8f5b1\
+    extracted/DerivedName.txt:fa05755dfa75395823ce0d8cc0508f645b6bbcf8f59a9468b80586d458b3cd5f\
+    extracted/DerivedNumericValues.txt:94e6c8a73e460c4196ab198aec2219cf3bbfd5aae6595f5d048311d41d20c9fb"
 
 # Security files:
 # - < 17.0.0: https://www.unicode.org/Public/security/$VERSION/$file)
@@ -37,10 +37,10 @@ UCD_FILES="\
 SECURITY_URL="https://www.unicode.org/Public/$VERSION/security"
 # Format: filename:checksum
 SECURITY_FILES="\
-    IdentifierStatus.txt:617228a16da13850bf8af28b6cd08f5e9b6595d2eb60404fe6eee2c85b4e4a35\
-    IdentifierType.txt:924ac63faa97ed73420d6ac48d08279d90968c7da0502ab701e08bfbb9683c22\
-    confusables.txt:091c7f82fc39ef208faf8f94d29c244de99254675e09de163160c810d13ef22a\
-    intentional.txt:33738217c15c1a0df0b7a2cc0a0b50b27ebdca119ca11253440ec0102f05626b"
+    IdentifierStatus.txt:5863c7d99ca18f213c41c7318aa5528bebfb6d32ec0f1d5944e37192c119aebd\
+    IdentifierType.txt:16cd9c65392945904890bb2b64c686397438bcf29b1a47a0fc478a24c17d433a\
+    confusables.txt:fa913a52e5ee1106631b0c5489198e36970596fa2d2b3a36e9ed5dfb8f66e4c6\
+    intentional.txt:5b69cdfd7be6be45d51b9cf7ec799df91c1acc47c557d66c92a8d6623df78b0e"
 
 # Download the files
 
